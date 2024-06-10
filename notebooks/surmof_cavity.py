@@ -41,9 +41,7 @@ def threelayerstack_trref(wfreq, d2, d3, d4, eps1, eps2, eps3, eps4, eps5):
     ref = m1ref_fwd + m1tr_fwd * m1tr_back * m2ref_fwd * np.exp(1j*k3*2*d3) / den
     return tr, ref
     
-def ag_surmof_cavity_trref(wfreq, thickness, npoles:int = 3):
-    # Material data
-    # See verify_data.py for explanation on how to transform these to the usual quantities.
+def eps_cav(wfreq, npoles):
     f0 = np.array([448.79110491874115, 438.2930673770547, 412.93727009075883])
     intensity = np.array([1.04500718, 1.63227866, 14.84804589])
     damping = np.array([6.2, 6.0, 5.3])
@@ -51,12 +49,6 @@ def ag_surmof_cavity_trref(wfreq, thickness, npoles:int = 3):
     f0 = f0[-npoles:]
     intensity = intensity[-npoles:]
     damping = damping[-npoles:]
-
-    eps_background = 1.6
-
-    # f0 = f0[-1:]
-    # intensity = intensity[-1:]
-    # damping = damping[-1:]
 
     gamma = damping*2*np.pi
     w0 = 2*np.pi*f0
@@ -68,6 +60,19 @@ def ag_surmof_cavity_trref(wfreq, thickness, npoles:int = 3):
     w0 /= 300
     wp /= 300
     gamma /= 300
+
+    eps_background = 1.6
+
+    eps = eps_background*np.ones(wfreq.shape, dtype='complex')
+    for i in range(npoles):
+        eps += wp[i]**2 / (w0[i]**2 - wfreq**2 - 1j*wfreq*gamma[i])
+
+    return eps
+
+def ag_surmof_cavity_trref(wfreq, thickness, npoles:int = 3):
+    # Material data
+    # See verify_data.py for explanation on how to transform these to the usual quantities.
+
     # Also for silver we have parameters from fitting.
     # These are from fp^2 / [f0^2 - f^2 - i f g] with normal frequencies in THz.
     Agw0 = 2*np.pi*134.39519365 / 300
@@ -80,12 +85,10 @@ def ag_surmof_cavity_trref(wfreq, thickness, npoles:int = 3):
 
     eps_air = 1
     eps_Ag = 1 + Agwp**2 / (Agw0**2 - wfreq**2 - 1j*Aggamma*wfreq)
-    eps_cav = eps_background*np.ones(wfreq.shape, dtype='complex')
-    for i in range(npoles):
-        eps_cav += wp[i]**2 / (w0[i]**2 - wfreq**2 - 1j*wfreq*gamma[i])
+    eps_cavity = eps_cav(wfreq, npoles)
 
     #return np.sqrt(eps_cav)
-    tr, ref = threelayerstack_trref(wfreq, mirror1d, thickness, mirror2d, eps_air, eps_Ag, eps_cav, eps_Ag, eps_air)
+    tr, ref = threelayerstack_trref(wfreq, mirror1d, thickness, mirror2d, eps_air, eps_Ag, eps_cavity, eps_Ag, eps_air)
     
     # Here, we can decide what quantity to return.
     return tr
