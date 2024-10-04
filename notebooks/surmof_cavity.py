@@ -12,6 +12,10 @@ Markus Nyman
 '''
 
 import numpy as np
+import treams
+import treams.coeffs
+import treams.special
+import mie_smat
 
 def fresnel(eps1, eps2):
     n1 = np.sqrt(eps1)
@@ -69,7 +73,7 @@ def eps_cav(wfreq, npoles):
 
     return eps
 
-def ag_surmof_cavity_trref(wfreq, thickness, npoles:int = 3):
+def ag_surmof_cavity_trref(wfreq, thickness, npoles:int = 3): #Previously used
     # Material data
     # See verify_data.py for explanation on how to transform these to the usual quantities.
 
@@ -91,9 +95,45 @@ def ag_surmof_cavity_trref(wfreq, thickness, npoles:int = 3):
     tr, ref = threelayerstack_trref(wfreq, mirror1d, thickness, mirror2d, eps_air, eps_Ag, eps_cavity, eps_Ag, eps_air)
     
     # Here, we can decide what quantity to return.
-    return tr
+    return tr#, tr
     #return tr, ref  # this can be used for testing
 
+def ag_surmof_cavity_det_smat(wfreq, thickness, npoles:int = 3):
+
+    # Mirror thicknesses, these are taken from Benedikt's paper
+    mirror1d = 0.01
+    mirror2d = 0.03
+
+    eps_air = 1
+    eps_Ag = 4.60853575 + 9055.04799147j * (1/(wfreq) - 1/(wfreq+0.21903558j))
+    eps_cavity = eps_cav(wfreq, npoles)
+
+    #return np.sqrt(eps_cav)
+    tr, ref = threelayerstack_trref(wfreq, mirror1d, thickness, mirror2d, eps_air, eps_Ag, eps_cavity, eps_Ag, eps_air)
+    tr, ref2 = threelayerstack_trref(wfreq, mirror2d, thickness, mirror1d, eps_air, eps_Ag, eps_cavity, eps_Ag, eps_air)
+    
+    # Here, we can decide what quantity to return.
+    S = np.moveaxis([[ref, tr],[tr, ref2]], -1, 0)
+    print(S.shape)
+    return np.linalg.det(S)
+
+
+def ag_surmof_core_shell(wfreq, d_core, npoles:int = 3, l=1):
+
+    mirror = 0.02 # Average mirror thickness from Benedikt's paper
+
+    eps_air = 1
+    eps_Ag = 4.60853575 + 9055.04799147j * (1/(wfreq) - 1/(wfreq+0.21903558j))
+    eps_cavity = eps_cav(wfreq, npoles)
+
+    k0 = wfreq
+
+    coeffs = [treams.coeffs.mie(l, k * np.array([d_core/2, d_core/2+mirror]), [eps_c, eps_a, eps_air], [1,1,1], [0,0,0])[0,0] 
+              for k, eps_c, eps_a in zip(k0, eps_cavity, eps_Ag)]
+
+    #coeffs = [treams.coeffs.mie(l,  [k*d_core/2], [eps_c, eps_air], [1,1], [0,0])[0,0] for k, eps_c in zip(k0, eps_cavity)]
+
+    return np.array(coeffs)
 
 if __name__=='__main__':
     # Testing complex frequency calculations.
