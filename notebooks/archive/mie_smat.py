@@ -8,7 +8,7 @@
 import treams.special as ts
 import treams
 from functools import partial
-import numpy as np
+import jax.numpy as np
 
 def bessel_hankel(n, bessel):
     def inner(x):
