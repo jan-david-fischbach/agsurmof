@@ -48,12 +48,12 @@ def threelayerstack_trref(wfreq, d2, d3, d4, eps1, eps2, eps3, eps4, eps5):
     ref = m1ref_fwd + m1tr_fwd * m1tr_back * m2ref_fwd * np.exp(1j*k3*2*d3) / den
     return tr, ref
     
-def eps_cav(wfreq, npoles, scale_osc=1):
+def eps_cav(wfreq, npoles, scale_osc=1, scale_damping=1):
     # Material data
     # See verify_data.py for explanation on how to transform these to the usual quantities.
     f0 = np.array([448.79110491874115, 438.2930673770547, 412.93727009075883])
     intensity = np.array([1.04500718, 1.63227866, 14.84804589]) * scale_osc
-    damping = np.array([6.2, 6.0, 5.3])
+    damping = np.array([6.2, 6.0, 5.3]) * scale_damping
 
     f0 = f0[-npoles:]
     intensity = intensity[-npoles:]
@@ -104,7 +104,8 @@ def ag_surmof_cavity_trref(wfreq, thickness, npoles:int = 3): #Previously used
     return tr#, tr
     #return tr, ref  # this can be used for testing
 
-def ag_surmof_cavity_det_smat(wfreq, thickness, npoles:int = 3, scale_osc:float=1):
+def ag_surmof_cavity_det_smat(wfreq, thickness, npoles:int = 3, 
+                              scale_osc:float=1, scale_damping:float=1):
 
     # Mirror thicknesses, these are taken from Benedikt's paper
     mirror1d = 0.01
@@ -112,7 +113,7 @@ def ag_surmof_cavity_det_smat(wfreq, thickness, npoles:int = 3, scale_osc:float=
 
     eps_air = 1
     eps_Ag = 4.60853575 + 9055.04799147j * (1/(wfreq) - 1/(wfreq+0.21903558j))
-    eps_cavity = eps_cav(wfreq, npoles, scale_osc)
+    eps_cavity = eps_cav(wfreq, npoles, scale_osc, scale_damping)
 
     #return np.sqrt(eps_cav)
     tr, ref = threelayerstack_trref(wfreq, mirror1d, thickness, mirror2d, eps_air, eps_Ag, eps_cavity, eps_Ag, eps_air)
