@@ -105,11 +105,8 @@ def ag_surmof_cavity_trref(wfreq, thickness, npoles:int = 3): #Previously used
     #return tr, ref  # this can be used for testing
 
 def ag_surmof_cavity_det_smat(wfreq, thickness, npoles:int = 3, 
-                              scale_osc:float=1, scale_damping:float=1):
-
+                              scale_osc:float=1, scale_damping:float=1, mirror1d = 0.01, mirror2d = 0.03):
     # Mirror thicknesses, these are taken from Benedikt's paper
-    mirror1d = 0.01
-    mirror2d = 0.03
 
     eps_air = 1
     eps_Ag = 4.60853575 + 9055.04799147j * (1/(wfreq) - 1/(wfreq+0.21903558j))
