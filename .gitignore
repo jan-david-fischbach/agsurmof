@@ -169,3 +169,4 @@ cython_debug/
 
 # mac
 .DS_Store
+.png
