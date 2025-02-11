@@ -87,8 +87,8 @@ def select_modes(npoles, scale_osc, scale_damping, domain, modenumber=1, force=F
 # %%
 def plot_splitting(
   modenumber, npoles, scale_osc, scale_damping, domain, 
-  inv_L=True, ylim=(1.2, 2.5), xlim=(1,12), color_rabi="r",
-  axs=None, return_fit=False,
+  inv_d=True, ylim=(1.2, 2.5), xlim=(1,12), color_rabi="r",
+  axs=None, return_fit=False, n_interp=300,
   c_os          = (0.8, 0.8, 0.8),
   c_grid        = (0.8, 0.8, 0.8),
   c_fundamental = "gray",
@@ -122,7 +122,7 @@ def plot_splitting(
     plt.plot([],[], color=c_fit, linestyle="none", marker=".", label="coupling fit")
     plt.plot([],[], "--", color=c_os, zorder=5, label="'uncoupled' cavity mode\n(from fit)")
 
-  param = 1/thickness if inv_L else thickness
+  param = 1/thickness if inv_d else thickness
   rabi_param = param[rabi_idx]
   if axs is None:
     fig, axs = plt.subplots(2, 1, sharex=True, figsize=(90*mm, 90*mm), height_ratios=[3,1])
@@ -141,9 +141,9 @@ def plot_splitting(
   om_os=[]
   evs_fit = []
 
-  param_interp = np.linspace(min(param), max(param), 300)
+  param_interp = np.linspace(min(param), max(param), n_interp)
   for i, p in enumerate(param_interp):
-      interp_d = 1/p if inv_L else p
+      interp_d = 1/p if inv_d else p
       evs = []
       for pole in selected.T:
         real = np.interp(interp_d, thickness, pole.real)
@@ -189,7 +189,7 @@ def plot_splitting(
   plt.ylim(0, 1.1*max(f_rabi.real/2, np.nanmax(cs.flatten())))
 
   plt.legend(fontsize=6, title="Material Resonances", loc="lower right", frameon=True)
-  if inv_L:
+  if inv_d:
       fig.supxlabel(r"Inverse Cavity Thickness $\frac{1}{d}$ ["+inv_um+"]")
       plt.xlim(xlim)
   else:
@@ -235,13 +235,18 @@ plt.savefig("out/Fit_Hamiltonian.pdf")
 
 
 # %%
-fig, axs, om_os1, cs1 = plot_splitting(1,1,1,1,domain, color_rabi="C0", return_fit=True)
-_, _,     om_os2, cs2 = plot_splitting(2,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
-_, _,     om_os3, cs3 = plot_splitting(4,1,1,1,domain, color_rabi="C2", return_fit=True, axs=axs, xlim=(0.3, 12))
+om_oss = []
+css = []
+axs = None
+for i, mode in enumerate([1,2,4,6]):
+  fig, axs, om_os, cs = plot_splitting(mode,1,1,1,domain, 
+    color_rabi=f"C{i}", return_fit=True, axs=axs,
+    xlim=(0.2,7), inv_d=True)
+  om_oss.append(om_os)
+  css.append(cs)
 
 # %%
-plt.plot(om_os1, cs1)
-plt.plot(om_os2, cs2)
-plt.plot(om_os3, cs3)
+for om_os, cs in zip(om_oss, css):
+  plt.plot(om_os, cs)
 
 # %%
