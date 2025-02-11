@@ -24,10 +24,11 @@ from functools import partial
 from diffaaable.selective import selective_refinement_aaa
 import pickle
 from tqdm import tqdm
-
+from pathlib import Path
 
 # %%
-def find_qnms(ts, npoles=3, osc_strength=1, damping=1, checkpointing=True):
+def find_qnms(ts, npoles=3, osc_strength=1, damping=1, 
+              domain=[1-0.5j, 2.5+0.05j], checkpointing=True, plotting=True):
   """Find the poles of the S-matrix of a surmof cavity 
 
   Args:
@@ -42,19 +43,24 @@ def find_qnms(ts, npoles=3, osc_strength=1, damping=1, checkpointing=True):
         Whether to write results to a cache file (and avoid recomputing 
         results already present in the future). Defaults to True.
   """
-  fname = f"tmp/fine_{npoles}pole_{osc_strength}osc_{damping}damping.pkl"
+  d = domain
+  folder = Path(f"tmp/domain_{d[0].real}_{d[0].imag}_{d[1].real}_{d[1].imag}")
+  folder.mkdir(parents=True, exist_ok=True)
+  fname = folder/f"fine_{npoles}pole_{osc_strength}osc_{damping}damping.pkl"
 
-  try:
-    with open(fname, 'rb') as file:
-      cache = pickle.load(file)
-    all_poles    = cache['poles']
-    all_residues = cache['residues']
+  all_poles = []
+  all_residues = []
+  ts_new = ts
+  if checkpointing:
+    try:
+      with open(fname, 'rb') as file:
+        cache = pickle.load(file)
+      all_poles    = cache['poles']
+      all_residues = cache['residues']
 
-    ts_new = [t for t in ts if t not in cache['thickness']] # TODO
-  except FileNotFoundError:
-    all_poles = []
-    all_residues = []
-    ts_new = ts
+      ts_new = [t for t in ts if t not in cache['thickness']] # TODO
+    except FileNotFoundError:
+      pass
 
   for thickness in tqdm(ts_new):
     f = partial(det_smat, 
@@ -63,23 +69,29 @@ def find_qnms(ts, npoles=3, osc_strength=1, damping=1, checkpointing=True):
     )
 
     poles, residues, evals = selective_refinement_aaa(
-      f, domain=[1-0.5j, 2.5+0.05j], 
+      f, domain=domain, 
       N=400, use_adaptive=False, tol_pol=1e-6, Dmax=11)
                     
     all_poles.append(poles)
     all_residues.append(residues)
 
-    ts_tmp = ts[:len(all_poles)]
-    sorter = np.argsort(ts_tmp)
-    poles_tmp    = [all_poles[i] for i in sorter]
-    residues_tmp = [all_residues[i] for i in sorter]
-    ts_tmp       = [ts_tmp[i] for i in sorter]
-    with open(fname, "wb") as file:
-      pickle.dump({
-        "poles":    poles_tmp, 
-        "residues": residues_tmp, 
-        "thickness":ts_tmp
-      }, file)
+    if checkpointing:
+      ts_tmp = ts[:len(all_poles)]
+      sorter = np.argsort(ts_tmp)
+      poles_tmp    = [all_poles[i] for i in sorter]
+      residues_tmp = [all_residues[i] for i in sorter]
+      ts_tmp       = [ts_tmp[i] for i in sorter]
+      with open(fname, "wb") as file:
+        pickle.dump({
+          "poles":    poles_tmp, 
+          "residues": residues_tmp, 
+          "thickness":ts_tmp
+        }, file)
+  if plotting:
+    plt.figure()
+    eyes(ts, all_poles, all_residues)
+    plt.savefig(fname.parent/(fname.stem+".png"), dpi=600)
+    plt.close()
   
   return all_poles, all_residues
 
@@ -102,24 +114,26 @@ def eyes(ts, all_poles, all_residues):
 # %%
 if __name__ == "__main__":
   ts = 0.005*(np.arange(1, 120)+1)
+  domain = [1-0.5j, 2.5+0.05j]
 
-  all_poles, all_residues = find_qnms(ts, npoles=1, osc_strength=1, damping=1, checkpointing=True)
-  plt.figure()
-  eyes(ts, all_poles, all_residues)
-  plt.savefig("tmp/prelim_1pole_1osc_1damp.png", dpi=600)
-  
+  for npoles in [1,3]:
+    all_poles, all_residues = find_qnms(
+      ts, npoles=npoles, osc_strength=1, damping=1, domain=domain, 
+      checkpointing=True
+    )
+
+  for osc in [1, 0.25, 0.1, 0.025, 0.01]:
+    all_poles, all_residues = find_qnms(
+      ts, npoles=1, osc_strength=osc, damping=1, domain=domain, 
+      checkpointing=True
+    )
 
 # %%
-if __name__ == "__main__":
-  all_poles, all_residues = find_qnms(ts, npoles=3, osc_strength=1, damping=1, checkpointing=True)
-  plt.figure()
-  eyes(ts, all_poles, all_residues)
-  plt.savefig("tmp/prelim_3pole_1osc_1damp.png", dpi=600)
+  ts = 0.005*(np.arange(1, 240)+1)
+  domain = [0.7-0.7j, 5+0.05j]
 
-# %%
-if __name__ == "__main__":
-  for osc in [1, 0.25, 0.1, 0.025, 0.1]:
-    all_poles, all_residues = find_qnms(ts, npoles=1, osc_strength=osc, damping=1, checkpointing=True)
-    plt.figure()
-    eyes(ts, all_poles, all_residues)
-    plt.savefig(f"tmp/prelim_1pole_{osc}osc_1damp.png", dpi=600)
+  for npoles in [1,3]:
+    all_poles, all_residues = find_qnms(
+      ts, npoles=npoles, osc_strength=1, damping=1, domain=domain, 
+      checkpointing=True
+    )

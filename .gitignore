@@ -1,4 +1,6 @@
 notebooks/out
+nohup.out
+.png
 
 # Derived from:
 # https://raw.githubusercontent.com/github/gitignore/main/Python.gitignore
@@ -169,4 +171,3 @@ cython_debug/
 
 # mac
 .DS_Store
-.png
