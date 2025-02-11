@@ -38,7 +38,7 @@ from qnmsc.materials import to_omega, eps_surmof, eps_ag
 from scipy.constants import c as c0
 import staaax
 
-def ag_surmof_cavity_det_smat(
+def ag_surmof_cavity_smat(
   hbar_omega, thickness, npoles:int = 3, 
   scale_osc:float=1, scale_damping:float=1, 
   mirror1d = 0.01, mirror2d = 0.03
@@ -59,7 +59,20 @@ def ag_surmof_cavity_det_smat(
   # print(f"{k0=}")
   kx = 0
   stack, info = staaax.angled_stratified.stack_smat_kx(ds, ns, k0, kx, pol="p")
-  smat, portmap = sax.sdense(stack())
+  return stack()
+
+def ag_surmof_cavity_det_smat(
+  hbar_omega, thickness, npoles:int = 3, 
+  scale_osc:float=1, scale_damping:float=1, 
+  mirror1d = 0.01, mirror2d = 0.03
+  ):
+    
+  smat = ag_surmof_cavity_smat(
+    hbar_omega, thickness, npoles, 
+    scale_osc, scale_damping, 
+    mirror1d, mirror2d
+  )
+  smat, portmap = sax.sdense(smat)
   return np.linalg.det(smat)
 
 if __name__=='__main__':

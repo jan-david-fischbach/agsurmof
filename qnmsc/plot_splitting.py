@@ -85,10 +85,20 @@ def select_modes(npoles, scale_osc, scale_damping, domain, modenumber=1, force=F
 
 
 # %%
-def plot_splitting(modenumber, npoles, scale_osc, scale_damping, domain, 
-                   inv_L=True, ylim=(1.2, 2.5), xlim=(1,12), color_rabi="r",
-                   axs=None, return_fit=False):
-  light_gray = (0.8, 0.8, 0.8)
+def plot_splitting(
+  modenumber, npoles, scale_osc, scale_damping, domain, 
+  inv_L=True, ylim=(1.2, 2.5), xlim=(1,12), color_rabi="r",
+  axs=None, return_fit=False,
+  c_os          = (0.8, 0.8, 0.8),
+  c_grid        = (0.8, 0.8, 0.8),
+  c_fundamental = "gray",
+  c_higher      = (0, 0, 0, 0.2),
+  c_fit        = "k",
+  c_font        = "k",
+  force_legend  = False,
+  legend_loc    = 'best'
+  ):
+
   poles, residues, thickness, material_poles = load_data(
     npoles, scale_osc, scale_damping, domain
   )
@@ -106,21 +116,26 @@ def plot_splitting(modenumber, npoles, scale_osc, scale_damping, domain,
   except ValueError as e:
     rabi_ok = False
 
+  def populate_legend():
+    plt.plot([],[], color=c_fundamental, label="fundamental QNMs")
+    plt.plot([],[], color=c_higher, linewidth=1, label="higher order QNMs")
+    plt.plot([],[], color=c_fit, linestyle="none", marker=".", label="coupling fit")
+    plt.plot([],[], "--", color=c_os, zorder=5, label="'uncoupled' cavity mode\n(from fit)")
+
   param = 1/thickness if inv_L else thickness
   rabi_param = param[rabi_idx]
   if axs is None:
     fig, axs = plt.subplots(2, 1, sharex=True, figsize=(90*mm, 90*mm), height_ratios=[3,1])
     plt.sca(axs[0])
-    plt.plot([],[], color="gray", label="fundamental QNMs")
-    plt.plot([],[], color="k", alpha=0.1, linewidth=1, label="higher order QNMs")
-    plt.plot([],[], "k.", label="coupling fit")
-    plt.plot([],[],"--", color=light_gray, zorder=5, label="'uncoupled' cavity mode\n(from fit)")
+    populate_legend()
   else:
     fig = plt.gcf()
     plt.sca(axs[0])
+    if force_legend:
+      populate_legend()
 
   f_mode = selected.real
-  plt.plot(param, f_mode, color="gray")
+  plt.plot(param, f_mode, color=c_fundamental)
 
   Cs=[]
   om_os=[]
@@ -142,28 +157,28 @@ def plot_splitting(modenumber, npoles, scale_osc, scale_damping, domain,
       om_os.append(om_o)
       evs_fit.append(inverse_eigenproblem.test_fwd_eig(om_o, material_poles, np.sqrt(couplings)))
 
-  plt.plot(param_interp, np.array(evs_fit).real, "k.")
-  plt.plot(param_interp, np.array(om_os), "--", color=light_gray, zorder=5)
+  plt.plot(param_interp, np.array(evs_fit).real, color=c_fit, linestyle="none", marker=".")
+  plt.plot(param_interp, np.array(om_os).real, "--", color=c_os, zorder=5)
   plt.vlines(
     [rabi_param],*f_mode[rabi_idx, [0, -1]], color=color_rabi, 
     label=f"$\Omega_\mathrm{{Rabi}}=2\cdot{f_rabi.real/2:.3f}[\mathrm{{eV}}]$",
     zorder=6
   )
   plt.ylabel("$\hbar \omega$ [eV]")
-  plt.legend(fontsize=6)
+  plt.legend(fontsize=6, labelcolor=c_font, loc=legend_loc)
 
   for i,mat_pole in enumerate(material_poles):
-      plt.axhline(mat_pole.real, color=f"C{i}", linestyle="--")
+      plt.axhline(mat_pole.real, color=f"C{i}")#, linestyle="--")
 
   for pole in poles_tracked.T:
-    plt.plot(param, pole.real, color="k", alpha=0.1, linewidth=1, zorder=-1)
+    plt.plot(param, pole.real, color=c_higher, linewidth=1, zorder=-1)
 
-  plt.axvline(rabi_param, color=light_gray, zorder=-1)
+  plt.axvline(rabi_param, color=c_grid, zorder=-1)
   plt.ylim(ylim)
   plt.sca(axs[1])
-  plt.axvline(rabi_param, color=light_gray, zorder=-1)
+  plt.axvline(rabi_param, color=c_grid, zorder=-1)
 
-  plt.ylabel("$c_i$ [eV]")
+  plt.ylabel("Coupling $c_i$ [eV]")
   Cs = np.array(Cs)
   cs = np.sqrt(np.real(Cs))
   for i,coupling in enumerate(cs.T):
@@ -175,7 +190,7 @@ def plot_splitting(modenumber, npoles, scale_osc, scale_damping, domain,
 
   plt.legend(fontsize=6, title="Material Resonances", loc="lower right", frameon=True)
   if inv_L:
-      fig.supxlabel("Inverse Cavity Thickness $1/d$ [1/um]")
+      fig.supxlabel(r"Inverse Cavity Thickness $\frac{1}{d}$ ["+inv_um+"]")
       plt.xlim(xlim)
   else:
       fig.supxlabel("Cavity Thickness [um]")
@@ -185,8 +200,38 @@ def plot_splitting(modenumber, npoles, scale_osc, scale_damping, domain,
   return fig, axs
 
 # %%
+from qnmsc.surmof_cavity import ag_surmof_cavity_smat
+
+hbar_omega = np.linspace(1, 2.5, 401)
+inv_d = np.linspace(1, 14, 421)
+E, T = np.meshgrid(hbar_omega, 1/inv_d)
+
+smat = ag_surmof_cavity_smat( 
+  E, T
+)
+
+# %%
+fig, axs = plt.subplots(2, 1, sharex=True, constrained_layout=True, figsize=(90*mm, 90*mm), height_ratios=[3,1])
+plt.sca(axs[0])
+plt.pcolormesh(1/T, E, np.abs(smat['in', 'out'])**2, zorder=-2, rasterized=True)
+plt.colorbar(label="Transmissivity")
+plot_splitting(1,3,1,1,domain, axs=axs,
+  c_fundamental="white",
+  c_higher=(1,1,1,0.5),
+  c_fit="white",
+  c_font="white",
+  force_legend=True,
+  xlim=(min(inv_d), max(inv_d)),
+  ylim=(min(hbar_omega), max(hbar_omega)),
+  legend_loc="lower right"
+)
+
+plt.savefig("out/Fit_Hamilonian_BG.pdf", dpi=600)
+
+# %%
 # %matplotlib inline
 plot_splitting(1,3,1,1,domain)
+plt.savefig("out/Fit_Hamiltonian.pdf")
 
 
 # %%
