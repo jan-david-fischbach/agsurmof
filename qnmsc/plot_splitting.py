@@ -87,7 +87,7 @@ def select_modes(npoles, scale_osc, scale_damping, domain, modenumber=1, force=F
 # %%
 def plot_splitting(modenumber, npoles, scale_osc, scale_damping, domain, 
                    inv_L=True, ylim=(1.2, 2.5), xlim=(1,12), color_rabi="r",
-                   axs=None):
+                   axs=None, return_fit=False):
   light_gray = (0.8, 0.8, 0.8)
   poles, residues, thickness, material_poles = load_data(
     npoles, scale_osc, scale_damping, domain
@@ -179,6 +179,9 @@ def plot_splitting(modenumber, npoles, scale_osc, scale_damping, domain,
       plt.xlim(xlim)
   else:
       fig.supxlabel("Cavity Thickness [um]")
+
+  if return_fit:
+    return fig, axs, om_os, cs
   return fig, axs
 
 # %%
@@ -187,8 +190,13 @@ plot_splitting(1,3,1,1,domain)
 
 
 # %%
-fig, axs = plot_splitting(1,1,1,1,domain, color_rabi="C0")
-plot_splitting(2,1,1,1,domain, color_rabi="C1", axs=axs)
-plot_splitting(4,1,1,1,domain, color_rabi="C2", axs=axs, xlim=(0.3, 12))
+fig, axs, om_os1, cs1 = plot_splitting(1,1,1,1,domain, color_rabi="C0", return_fit=True)
+_, _,     om_os2, cs2 = plot_splitting(2,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
+_, _,     om_os3, cs3 = plot_splitting(4,1,1,1,domain, color_rabi="C2", return_fit=True, axs=axs, xlim=(0.3, 12))
+
+# %%
+plt.plot(om_os1, cs1)
+plt.plot(om_os2, cs2)
+plt.plot(om_os3, cs3)
 
 # %%

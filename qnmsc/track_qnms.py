@@ -186,11 +186,16 @@ if __name__ == "__main__":
   ts = 0.005*(np.arange(1, 240)+1)
   domain = [0.7-0.7j, 5+0.05j]
 
-  for npoles in [1,3]:
-    all_poles, all_residues = find_qnms(
-      ts, npoles=npoles, osc_strength=1, damping=1, domain=domain, 
-      checkpointing=True
-    )
+  all_poles, all_residues = find_qnms(
+    ts, npoles=3, osc_strength=1, damping=1, domain=domain, 
+    checkpointing=True
+  )
+
+  ts = 0.005*(np.arange(1, 480)+1)
+  all_poles, all_residues = find_qnms(
+    ts, npoles=1, osc_strength=1, damping=1, domain=domain, 
+    checkpointing=True
+  )
 
 # %%
   ts = 0.0025*(np.arange(1, 240)+1)
