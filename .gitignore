@@ -1,4 +1,6 @@
 notebooks/out
+nohup.out
+.png
 
 # Derived from:
 # https://raw.githubusercontent.com/github/gitignore/main/Python.gitignore

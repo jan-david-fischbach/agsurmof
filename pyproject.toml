@@ -1,0 +1,19 @@
+[build-system]
+build-backend = "flit_core.buildapi"
+requires = ["flit_core >=3.2,<4"]
+
+[project]
+name = "qnmsc"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "ipykernel>=6.29.5",
+    "jax>=0.5.0",
+    "jpu>=0.0.4",
+    "matplotlib>=3.10.0",
+    "pyqt6>=6.8.1",
+    "scienceplots>=2.1.1",
+    "staaax>=0.2.0",
+]
