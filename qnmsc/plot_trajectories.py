@@ -13,22 +13,23 @@
 # %%
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from qnmsc.mpl_config import um, inv_um, mm
 # %config InlineBackend.figure_format='retina'
 
 if __name__=="__main__":
-  from mpl_config import um, inv_um
+  import qnmsc.mpl_config
+  qnmsc.mpl_config.config()
   DEBUG=False
   domain = [1-0.5j, 2.5+0.05j]
 
 # %%
 import numpy as np
 import pickle
-from materials import eps_surmof, eps_ag, surmof_material_data, to_eV, to_omega
-from track_qnms import filename, track_qnms
+from qnmsc.materials import eps_surmof, eps_ag, surmof_material_data, to_eV, to_omega
+from qnmsc.track_qnms import filename, track_qnms
 import diffaaable
 
 # %%
-mm = 0.1/2.54
 def calc_material_poles(scale_osc, scale_damping):
   """Material poles in $s^{-1}$
 

@@ -34,7 +34,7 @@ jax.config.update("jax_debug_nans", True)
 import jax.numpy as np
 import staaax.angled_stratified
 import sax
-from materials import to_omega, eps_surmof, eps_ag
+from qnmsc.materials import to_omega, eps_surmof, eps_ag
 from scipy.constants import c as c0
 import staaax
 

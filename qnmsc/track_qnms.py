@@ -16,7 +16,7 @@
 
 # %%
 import numpy as np
-from surmof_cavity import ag_surmof_cavity_det_smat as det_smat
+from qnmsc.surmof_cavity import ag_surmof_cavity_det_smat as det_smat
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 # %config InlineBackend.figure_format='retina'

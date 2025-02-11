@@ -1449,9 +1449,9 @@ wheels = [
 ]
 
 [[package]]
-name = "qnm-strong-coupling"
+name = "qnmsc"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "ipykernel" },
     { name = "jax" },
