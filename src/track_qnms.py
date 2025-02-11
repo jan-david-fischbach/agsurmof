@@ -27,6 +27,13 @@ from tqdm import tqdm
 from pathlib import Path
 
 # %%
+def filename(npoles, osc_strength, damping, domain):
+  d = domain
+  folder = Path(f"tmp/domain_{d[0].real}_{d[0].imag}_{d[1].real}_{d[1].imag}")
+  folder.mkdir(parents=True, exist_ok=True)
+  file = folder/f"fine_{npoles}pole_{osc_strength}osc_{damping}damping.pkl"
+  return file
+
 def find_qnms(ts, npoles=3, osc_strength=1, damping=1, 
               domain=[1-0.5j, 2.5+0.05j], checkpointing=True, plotting=True):
   """Find the poles of the S-matrix of a surmof cavity 
@@ -43,10 +50,7 @@ def find_qnms(ts, npoles=3, osc_strength=1, damping=1,
         Whether to write results to a cache file (and avoid recomputing 
         results already present in the future). Defaults to True.
   """
-  d = domain
-  folder = Path(f"tmp/domain_{d[0].real}_{d[0].imag}_{d[1].real}_{d[1].imag}")
-  folder.mkdir(parents=True, exist_ok=True)
-  fname = folder/f"fine_{npoles}pole_{osc_strength}osc_{damping}damping.pkl"
+  fname = filename(npoles, osc_strength, damping, domain)
 
   all_poles = []
   all_residues = []
@@ -59,6 +63,7 @@ def find_qnms(ts, npoles=3, osc_strength=1, damping=1,
       all_residues = cache['residues']
 
       ts_new = [t for t in ts if t not in cache['thickness']] # TODO
+      ts = np.concat([np.array(cache['thickness']), np.array(ts_new)])
     except FileNotFoundError:
       pass
 
@@ -95,6 +100,55 @@ def find_qnms(ts, npoles=3, osc_strength=1, damping=1,
   
   return all_poles, all_residues
 
+def track_qnms(poles, residues):
+  res_prev = residues[0]
+  pol_prev = poles[0]
+  mapping_prev = np.arange(len(pol_prev))
+
+  modes = []
+  max_mode_idx = mapping_prev[-1]
+  threshold = 1
+
+  for pol, res in zip(poles, residues):
+    connection_matrix = np.abs(res_prev[:, None]-res[None, :]) / np.abs(res_prev[:, None]+res[None, :])
+    connection_matrix_pol = np.abs(pol_prev[:, None]-pol[None, :]) / np.abs(pol_prev[:, None]+pol[None, :]) / np.abs(res_prev[:, None]+res[None, :])
+    conny = 1/(connection_matrix+connection_matrix_pol+1e-20) # high values -> strong connection
+
+    new_mapping = np.empty(len(pol), dtype=int)
+    new_mapping[:] = -1
+    while np.any(conny>threshold):
+      conn_from, conn_to = np.unravel_index(conny.argmax(), conny.shape)
+      new_mapping[conn_to] = mapping_prev[conn_from]
+
+      conny[conn_from, :] = 0 
+      conny[:, conn_to] = 0 
+    
+    for i, val in enumerate(new_mapping):
+      if val<0:
+        max_mode_idx += 1
+        new_mapping[i] = max_mode_idx
+
+    modes.append(new_mapping)
+    mapping_prev = new_mapping
+
+    res_prev = res
+    pol_prev = pol
+
+  poles_tracked = np.empty((len(poles), max_mode_idx+1), dtype=complex)
+  poles_tracked[:] = np.nan
+  residues_tracked = poles_tracked.copy()
+
+  for i, (pol, res, mod) in enumerate(zip(poles, residues, modes)):
+    for p, r, m in zip(pol, res, mod):
+      poles_tracked[i, m] = p 
+      residues_tracked[i, m] = r
+
+  poles_tracked_filtered = poles_tracked.copy()
+  poles_tracked_filtered[np.abs(residues_tracked)<1e-5] = np.nan
+
+  filter = np.sum(~np.isnan(poles_tracked), axis=0) > 20
+
+  return poles_tracked_filtered[:, filter], residues_tracked[:, filter]
 
 # %%
 def eyes(ts, all_poles, all_residues):
@@ -137,3 +191,11 @@ if __name__ == "__main__":
       ts, npoles=npoles, osc_strength=1, damping=1, domain=domain, 
       checkpointing=True
     )
+
+# %%
+  ts = 0.0025*(np.arange(1, 240)+1)
+  domain = [1-0.5j, 2.5+0.05j]
+  all_poles, all_residues = find_qnms(
+    ts, npoles=1, osc_strength=0.025, damping=1, domain=domain, 
+    checkpointing=True
+  )

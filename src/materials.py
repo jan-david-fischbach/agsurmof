@@ -4,8 +4,24 @@ from scipy.constants import hbar, e
 def to_omega(hbar_omega):
     return hbar_omega * e / hbar#in Hz
 
+def to_eV(omega):
+    return omega * hbar / e
+
 def _f_to_omega(f_Thz):
     return f_Thz * 2*np.pi*1e12
+
+def surmof_material_data(scale_damping, scale_osc):
+    omega_0 = _f_to_omega(
+        np.array([412.93727009075883, 438.2930673770547, 448.79110491874115])
+    ) # in s^-1
+
+    gamma = _f_to_omega(
+        np.array([5.3, 6.0, 6.2]) * scale_damping
+    ) # in s^-1
+    
+    intensity = np.array([14.84804589, 1.63227866, 1.04500718]) * scale_osc
+    eps_background = 1.6
+    return omega_0, gamma, intensity, eps_background
 
 def eps_surmof(hbar_omega, npoles, scale_osc=1, scale_damping=1):
     """Relative Permittivity of the SURMOF material
@@ -23,13 +39,11 @@ def eps_surmof(hbar_omega, npoles, scale_osc=1, scale_damping=1):
     """
     
     # Material data
-    f0 = np.array([412.93727009075883, 438.2930673770547, 448.79110491874115])  #in THz
-    damping = np.array([5.3, 6.0, 6.2]) * scale_damping                         #in THz
-    intensity = np.array([14.84804589, 1.63227866, 1.04500718]) * scale_osc
-    eps_background = 1.6
+    mat = surmof_material_data(scale_damping, scale_osc)
+    omega_0, gamma, intensity, eps_background = mat
 
-    gamma   = _f_to_omega(damping[:npoles])
-    omega_0 = _f_to_omega(f0[:npoles])
+    gamma   = gamma[:npoles]
+    omega_0 = omega_0[:npoles]
     omega_p = np.sqrt(intensity[:npoles]*gamma*omega_0)
 
     omega = to_omega(hbar_omega)
