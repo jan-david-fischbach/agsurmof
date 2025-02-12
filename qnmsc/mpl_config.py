@@ -1,10 +1,16 @@
+import matplotlib.pyplot as plt
+
 def config():
-    import matplotlib.pyplot as plt
+    colorcycle = plt.rcParams['axes.prop_cycle']
+    print(colorcycle)
     import scienceplots
     plt.style.use('science')
     plt.style.use('nature')
 
-    params = {'text.latex.preamble': r'\usepackage{siunitx} \usepackage{amsmath} \usepackage{amssymb} \usepackage{sfmath}'}
+    params = {
+        'text.latex.preamble': r'\usepackage{siunitx} \usepackage{amsmath} \usepackage{amssymb} \usepackage{sfmath}',
+        'axes.prop_cycle': colorcycle
+    }
     plt.rcParams.update(params)
     import matplotlib as mpl
     mpl.rcParams['hatch.linewidth'] = 0.2  # previous pdf hatch linewidth
@@ -15,3 +21,9 @@ inv_um = r"\unit{\per \micro \meter}"
 um = r"$\mu m$"
 inv_um = r"$\mu m ^ {-1}$"
 mm = 0.1/2.54
+
+if __name__ == "__main__":
+    config()
+    plt.plot([1,2,3],[1,3,4])
+    plt.plot([1,2,3],[3,1,4])
+    plt.show()
