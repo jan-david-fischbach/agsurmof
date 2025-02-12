@@ -11,5 +11,7 @@ def config():
 
 um = r"\unit{\micro \meter}"
 inv_um = r"\unit{\per \micro \meter}"
-# inv_um = r"$\mu m ^ {-1}$"
+
+um = r"$\mu m$"
+inv_um = r"$\mu m ^ {-1}$"
 mm = 0.1/2.54

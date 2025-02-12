@@ -8,6 +8,10 @@
 #       format_name: percent
 #       format_version: '1.3'
 #       jupytext_version: 1.11.2
+#   kernelspec:
+#     display_name: .venv
+#     language: python
+#     name: python3
 # ---
 
 # %%
@@ -211,12 +215,14 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
 
 # %%
 if __name__ == "__main__":
-    plot_trajectories(3, 1, 1, domain, unit="THz", plot_neg_eps_r=True, fig_width=180*mm)
-    plt.savefig("out/ThreePole.pdf", dpi=600)
+    plt.figure()
+    plot_trajectories(1, 1, 1, domain, unit="THz", fig_width=90*mm)
+    plt.savefig("out/SinglePole.pdf", dpi=1200)
 
     # %%
-    plot_trajectories(1, 1, 1, domain, unit="THz", fig_width=90*mm)
-    plt.savefig("out/SinglePole.pdf", dpi=600)
+    plt.figure()
+    plot_trajectories(3, 1, 1, domain, unit="THz", plot_neg_eps_r=True, fig_width=180*mm)
+    plt.savefig("out/ThreePole.pdf", dpi=1200)
 
     # %%
     oscs = [1, 0.25, 0.1, 0.025, 0.01][0:-1]
@@ -228,12 +234,12 @@ if __name__ == "__main__":
         figsize=(180*mm,80*mm), constrained_layout=True
         )
     for osc, axs in zip(oscs, axss.T):
-        plot_trajectories(
-            1, osc, 1, domain, 
-            plot_domain=plot_domain1 if osc==1 else plot_domain2, 
-            unit="THz", axs=axs, cbar=False, d_limit=0.4
-        )
-    axs[0].set_title(f"{osc:.3f}")
+      plot_trajectories(
+          1, osc, 1, domain, 
+          plot_domain=plot_domain1 if osc==1 else plot_domain2, 
+          unit="THz", axs=axs, cbar=False, d_limit=0.4
+      )
+      axs[0].set_title(f"{osc:.3f}")
 
     axss[0,0].set_title("Scaled Oscillator Strength")
     fig.supxlabel("$\Re\{f\}$ [THz]")
@@ -245,7 +251,7 @@ if __name__ == "__main__":
     # plot_thickness(3, 1, 1, domain)
     # plot_thickness(3, 1, 1, domain, inv=False)
 
-    # %%
+# %%
 
 
 

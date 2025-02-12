@@ -75,7 +75,7 @@ def find_qnms(ts, npoles=3, osc_strength=1, damping=1,
 
     poles, residues, evals = selective_refinement_aaa(
       f, domain=domain, 
-      N=400, use_adaptive=False, tol_pol=1e-6, Dmax=11)
+      N=100, use_adaptive=False, tol_pol=1e-7, Dmax=22)
                     
     all_poles.append(poles)
     all_residues.append(residues)
@@ -106,7 +106,7 @@ def track_qnms(poles, residues):
   mapping_prev = np.arange(len(pol_prev))
 
   modes = []
-  max_mode_idx = mapping_prev[-1]
+  max_mode_idx = mapping_prev[-1] if len(mapping_prev) else -1
   threshold = 1
 
   for pol, res in zip(poles, residues):

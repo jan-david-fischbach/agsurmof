@@ -9,6 +9,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "diffaaable",
     "ipykernel>=6.29.5",
     "jax>=0.5.0",
     "jpu>=0.0.4",
@@ -17,3 +18,6 @@ dependencies = [
     "scienceplots>=2.1.1",
     "staaax>=0.2.0",
 ]
+
+[tool.uv.sources]
+diffaaable = { git = "ssh://git@github.com/jan-david-fischbach/diffaaable", rev = "subdivide_adaptive-1" }

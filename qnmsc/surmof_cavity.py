@@ -30,7 +30,7 @@ Markus Nyman
 
 import jax
 jax.config.update("jax_enable_x64", True)
-jax.config.update("jax_debug_nans", True)
+#jax.config.update("jax_debug_nans", True)
 import jax.numpy as np
 import staaax.angled_stratified
 import sax

@@ -151,7 +151,7 @@ name = "click"
 version = "8.1.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "colorama", marker = "platform_system == 'Windows'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/b9/2e/0090cbf739cee7d23781ad4b89a9894a41538e4fcf4c31dcdd705b78eb8b/click-8.1.8.tar.gz", hash = "sha256:ed53c9d8990d83c2a27deae68e4ee337473f6330c040a31d4225c9574d16096a", size = 226593 }
 wheels = [
@@ -271,18 +271,14 @@ wheels = [
 
 [[package]]
 name = "diffaaable"
-version = "1.1.0"
-source = { registry = "https://pypi.org/simple" }
+version = "1.1.1"
+source = { git = "ssh://git@github.com/jan-david-fischbach/diffaaable?rev=subdivide_adaptive-1#f5f785a5428b9e7c8d351565c82321c53ed70772" }
 dependencies = [
     { name = "baryrat" },
     { name = "jax" },
     { name = "jaxlib" },
     { name = "jaxopt" },
     { name = "numpy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/09/32/1286d048fc46d2d9bf2dc09dbc57192efcb4d37681d1c3f5466c40a4f8db/diffaaable-1.1.0.tar.gz", hash = "sha256:c41f85368fff54c91cd1b21f76b6b4087c96a8ffe6b07d04809a2c0cdb2c4097", size = 13470 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/39/67/21e28db04889513fa03290eaebf667a1ab36a76dbf1c4f586fc3fdf4ad57/diffaaable-1.1.0-py3-none-any.whl", hash = "sha256:6993ab222955b96dca6d6909718a96df299b692baef52816dd53e316083f0822", size = 14616 },
 ]
 
 [[package]]
@@ -435,7 +431,7 @@ name = "ipykernel"
 version = "6.29.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "appnope", marker = "sys_platform == 'darwin'" },
+    { name = "appnope", marker = "platform_system == 'Darwin'" },
     { name = "comm" },
     { name = "debugpy" },
     { name = "ipython" },
@@ -1453,6 +1449,7 @@ name = "qnmsc"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "diffaaable" },
     { name = "ipykernel" },
     { name = "jax" },
     { name = "jpu" },
@@ -1464,6 +1461,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "diffaaable", git = "ssh://git@github.com/jan-david-fischbach/diffaaable?rev=subdivide_adaptive-1" },
     { name = "ipykernel", specifier = ">=6.29.5" },
     { name = "jax", specifier = ">=0.5.0" },
     { name = "jpu", specifier = ">=0.0.4" },
@@ -1722,7 +1720,7 @@ name = "tqdm"
 version = "4.67.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "colorama", marker = "platform_system == 'Windows'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a8/4b/29b4ef32e036bb34e4ab51796dd745cdba7ed47ad142a9f4a1eb8e0c744d/tqdm-4.67.1.tar.gz", hash = "sha256:f8aef9c52c08c13a65f30ea34f4e5aac3fd1a34959879d7e59e63027286627f2", size = 169737 }
 wheels = [
