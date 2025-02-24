@@ -118,8 +118,8 @@ def plot_thickness(npoles, scale_osc, scale_damping, domain,
 
 # %%
 def plot_trajectories(npoles, scale_osc, scale_damping, domain, 
-  plot_domain = [1-0.06j, 2.5+0.01j], fig_width = 90*mm,
-  unit = "eV", axs=None, cbar=True, plot_neg_eps_r=False, d_limit=np.inf,
+  plot_domain = [1-0.06j, 2.5+0.01j], fig_width = 90*mm, fig_height = 80*mm,
+  unit = "eV", axs=None, cbar=True, labels=True, plot_neg_eps_r=False, d_limit=np.inf,
   ):
 
   c_ = unit_conversion[unit]
@@ -134,8 +134,10 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
   if axs is None:
     fig, axs = plt.subplots(
       2, 1, sharex=True, 
-      figsize=(fig_width,80*mm), constrained_layout=True
+      figsize=(fig_width,fig_height), constrained_layout=True
     )
+  else:
+    fig = plt.gcf()
   plt.sca(axs[0])
 
   # hbar_omega is the photon energy
@@ -186,7 +188,7 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
     s = np.interp(interp_d, thickness, np.abs(res))/(-imag)
     plt.scatter(c_(real), c_(imag), c=colors_interp, edgecolor='none', s=s, rasterized=True)
 
-  if cbar:
+  if labels:
     plt.ylabel(f"$\Im\{{{q_}\}}$ [{u_}]")
 
   plt.axhline(0, color="k", lw=0.4)
@@ -207,21 +209,22 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
 
   plt.ylim(0, max(interp_d))
   plt.xlim(min(c_(e_r)), max(c_(e_r)))
+  fig.align_ylabels()
 
-  if cbar:
+  if labels:
     plt.ylabel(f"$d$ [{um}]")
     plt.xlabel(f"$\Re\{{{q_}\}}$ [{u_}]")
-
 
 # %%
 if __name__ == "__main__":
     plt.figure()
-    plot_trajectories(1, 1, 1, domain, unit="THz", fig_width=90*mm)
+    plot_trajectories(1, 1, 1, domain, unit="THz", fig_width=90*mm, fig_height=50*mm)
     plt.savefig("out/SinglePole.pdf", dpi=1200)
 
     # %%
     plt.figure()
-    plot_trajectories(3, 1, 1, domain, unit="THz", plot_neg_eps_r=True, fig_width=180*mm)
+    plot_trajectories(3, 1, 1, domain, unit="THz", plot_neg_eps_r=True, fig_width=90*mm, fig_height=50*mm, cbar=False)
+    plt.xlim(350, 500)
     plt.savefig("out/ThreePole.pdf", dpi=1200)
 
     # %%
@@ -231,13 +234,13 @@ if __name__ == "__main__":
 
     fig, axss = plt.subplots(
         2, len(oscs), sharex="col", sharey="row",
-        figsize=(90*mm,80*mm), constrained_layout=True
+        figsize=(90*mm,50*mm), constrained_layout=True
         )
     for osc, axs in zip(oscs, axss.T):
       plot_trajectories(
           1, osc, 1, domain, 
           plot_domain=plot_domain1 if osc==1 else plot_domain2, 
-          unit="THz", axs=axs, cbar=False, d_limit=0.4
+          unit="THz", axs=axs, cbar=False, labels=False, d_limit=0.4
       )
       axs[0].set_title(f"{osc:.3f}")
 
@@ -256,5 +259,7 @@ if __name__ == "__main__":
     # eps_r = eps_surmof(e_r, 1, 1, 1)
     # plt.plot(e_r, eps_r)
 
-
 # %%
+
+
+

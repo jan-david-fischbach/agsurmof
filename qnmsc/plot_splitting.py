@@ -83,7 +83,6 @@ def select_modes(npoles, scale_osc, scale_damping, domain, modenumber=1, force=F
     np.save(select_fname, select)
     return select, modenumber
 
-
 # %%
 def plot_splitting(
   modenumber, npoles, scale_osc, scale_damping, domain, 
@@ -227,7 +226,7 @@ smat = ag_surmof_cavity_smat(
 )
 
 # %%
-fig, axs = plt.subplots(2, 1, sharex=True, constrained_layout=True, figsize=(90*mm, 90*mm), height_ratios=[3,1])
+fig, axs = plt.subplots(2, 1, sharex=True, constrained_layout=True, figsize=(90*mm, 70*mm), height_ratios=[3,1.5])
 plt.sca(axs[0])
 
 from matplotlib.colors import ListedColormap
@@ -268,7 +267,6 @@ plt.savefig("out/Fit_Hamilonian_BG.pdf", dpi=600)
 fig, axs, om_os, cs = plot_splitting(1,3,1,1,domain, return_fit=True)
 plt.savefig("out/Fit_Hamiltonian.pdf")
 
-
 # %%
 plot_splitting(1,1,1,1,domain, plot_dots=False)
 plt.savefig("out/Single_pole_splitting.pdf")
@@ -286,3 +284,5 @@ _, _,     om_os3, cs3 = plot_splitting(4,1,1,1,domain, color_rabi="C2", return_f
 plt.plot(om_os1, cs1)
 plt.plot(om_os2, cs2)
 plt.plot(om_os3, cs3)
+
+
