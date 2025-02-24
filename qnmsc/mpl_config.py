@@ -2,14 +2,15 @@ import matplotlib.pyplot as plt
 
 def config():
     colorcycle = plt.rcParams['axes.prop_cycle']
-    print(colorcycle)
+    # print(colorcycle)
     import scienceplots
     plt.style.use('science')
     plt.style.use('nature')
 
     params = {
         'text.latex.preamble': r'\usepackage{siunitx} \usepackage{amsmath} \usepackage{amssymb} \usepackage{sfmath}',
-        'axes.prop_cycle': colorcycle
+        'axes.prop_cycle': colorcycle,
+        'axes.titlesize': 7
     }
     plt.rcParams.update(params)
     import matplotlib as mpl

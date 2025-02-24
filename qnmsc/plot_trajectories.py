@@ -231,7 +231,7 @@ if __name__ == "__main__":
 
     fig, axss = plt.subplots(
         2, len(oscs), sharex="col", sharey="row",
-        figsize=(180*mm,80*mm), constrained_layout=True
+        figsize=(90*mm,80*mm), constrained_layout=True
         )
     for osc, axs in zip(oscs, axss.T):
       plot_trajectories(
@@ -251,7 +251,10 @@ if __name__ == "__main__":
     # plot_thickness(3, 1, 1, domain)
     # plot_thickness(3, 1, 1, domain, inv=False)
 
+    # %%
+    # e_r = np.linspace(1, 2.5, 1200)
+    # eps_r = eps_surmof(e_r, 1, 1, 1)
+    # plt.plot(e_r, eps_r)
+
+
 # %%
-
-
-

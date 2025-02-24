@@ -192,7 +192,7 @@ def plot_splitting(
   Cs = np.array(Cs)
   cs = np.sqrt(np.real(Cs))
   for i,coupling in enumerate(cs.T):
-      plt.plot(param_interp, coupling, ".-", color=c_mat[i], label=f"$p_{i+1}=\complexqty{{{material_poles[i]:.3f}}}{{eV}}$")
+      plt.plot(param_interp, coupling, ".-" if plot_dots else "-", color=c_mat[i], label=f"$p_{i+1}=\complexqty{{{material_poles[i]:.3f}}}{{eV}}$")
 
   gamma_avg = -np.sum(np.array(evs_fit), axis=-1).imag/(npoles+1) * cs[:,0]/cs[:,0]
   gamma_avg_res = np.interp(rabi_param, param_interp, gamma_avg)
@@ -270,7 +270,8 @@ plt.savefig("out/Fit_Hamiltonian.pdf")
 
 
 # %%
-plot_splitting(1,1,1,1,domain)
+plot_splitting(1,1,1,1,domain, plot_dots=False)
+plt.savefig("out/Single_pole_splitting.pdf")
 
 # %%
 ## Experimentation
@@ -285,5 +286,3 @@ _, _,     om_os3, cs3 = plot_splitting(4,1,1,1,domain, color_rabi="C2", return_f
 plt.plot(om_os1, cs1)
 plt.plot(om_os2, cs2)
 plt.plot(om_os3, cs3)
-
-# %%
