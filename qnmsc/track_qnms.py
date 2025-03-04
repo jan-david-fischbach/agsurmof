@@ -146,7 +146,7 @@ def track_qnms(poles, residues):
   poles_tracked_filtered = poles_tracked.copy()
   poles_tracked_filtered[np.abs(residues_tracked)<1e-5] = np.nan
 
-  filter = np.sum(~np.isnan(poles_tracked), axis=0) > 20
+  filter = np.sum(~np.isnan(poles_tracked), axis=0) > 5
 
   return poles_tracked_filtered[:, filter], residues_tracked[:, filter]
 

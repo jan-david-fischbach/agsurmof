@@ -32,6 +32,8 @@ import pickle
 from qnmsc.materials import eps_surmof, eps_ag, surmof_material_data, to_eV, to_omega
 from qnmsc.track_qnms import filename, track_qnms
 import diffaaable
+import matplotlib.colors as mcolors
+import colorsys
 
 # %%
 def calc_material_poles(scale_osc, scale_damping):
@@ -85,6 +87,61 @@ qty_str = {
 }
 
 # %%
+def label_tracked_qnms(poles_tracked, thickness):
+  plt.plot(thickness, poles_tracked.real, ".-")
+  for i, ptf in enumerate(poles_tracked.T):
+      filter = ~np.isnan(ptf)
+      if not np.any(filter):
+          continue
+      plt.annotate(f"p{i}", (thickness[filter][0],ptf[filter].real[0]), fontsize=5)
+      plt.annotate(f"p{i}", (thickness[filter][-1],ptf[filter].real[-1]),fontsize=5)
+  plt.xlabel(f"$d$ [{um}]")
+  plt.ylabel("$\hbar \omega$ [eV]")
+  
+def select_modes(npoles, scale_osc, scale_damping, domain, modenumber=1, force=False):
+  fname = filename(npoles, scale_osc, scale_damping, domain)
+  select_fname = fname.parent/(fname.stem+f".select{modenumber}.npy")
+
+  if select_fname.is_file() and not force:
+    selection = np.load(select_fname)
+    return selection, modenumber
+
+  poles, residues, thickness, material_poles = load_data(
+    npoles, scale_osc, scale_damping, domain
+  )
+  poles_tracked, residues_tracked = track_qnms(poles, residues)
+
+  plt.figure("Select Modes")
+  plot_thickness(npoles, scale_osc, scale_damping, domain, inv=False, horizontal=True)
+  label_tracked_qnms(poles_tracked, thickness)
+  plt.title(f"Select Modes m={modenumber}")
+  plt.show(block=True)
+
+  while True:
+    print("Please select the modes as a comma separated list")
+    user_selection = input()
+    select = user_selection.split(",")
+    if len(select) != npoles + 1:
+      print("Please give npoles + 1 select")
+      continue
+
+    try:
+      select = [int(m) for m in select]
+    except:
+      print("Please provide the integer mode numbers only")
+      continue
+
+    select = np.array(select, dtype=int)
+    max_mode = poles_tracked.shape[1]
+    if np.any(select>max_mode):
+      print(f"Mode number too large: maximum is {max_mode}")
+      continue
+    
+    select = select[select>=0] # enter -1 to avoid selecting a mode (e.g. if outside of domain)
+    np.save(select_fname, select)
+    return select, modenumber
+
+# %%
 def plot_thickness(npoles, scale_osc, scale_damping, domain, 
   unit = "eV", inv=True, horizontal=False
   ):
@@ -119,7 +176,8 @@ def plot_thickness(npoles, scale_osc, scale_damping, domain,
 # %%
 def plot_trajectories(npoles, scale_osc, scale_damping, domain, 
   plot_domain = [1-0.06j, 2.5+0.01j], fig_width = 90*mm, fig_height = 80*mm,
-  unit = "eV", axs=None, cbar=True, labels=True, plot_neg_eps_r=False, d_limit=np.inf,
+  unit = "eV", axs=None, cbar=True, labels=True, plot_neg_eps_r=False, d_limit=np.inf, 
+  color_thickness=False, num_modes = 4, upsample=10
   ):
 
   c_ = unit_conversion[unit]
@@ -155,12 +213,15 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
   _, _, _, poles = diffaaable.aaa(c_(E[::ds, ::ds]), eps[::ds, ::ds])
   _, _, _, zeros = diffaaable.aaa(c_(E[::ds, ::ds]), 1/eps[::ds, ::ds])
 
-  plt.pcolormesh(c_(E_r), c_(E_i), np.real(eps), norm=mpl.colors.SymLogNorm(linthresh=0.1,
+  pcm = plt.pcolormesh(c_(E_r), c_(E_i), np.real(eps), norm=mpl.colors.SymLogNorm(linthresh=0.1,
                       vmin=-1000.0, vmax=1000.0, base=10), shading='gouraud',
                       cmap="RdBu", rasterized=True)
 
   if cbar:
-    cb = plt.colorbar(label="$\Re\{\\varepsilon_\mathrm{r}\}$", ticks=[-1e3, -1, 0, 1, 1e3])
+    cb = plt.colorbar(
+      label="$\Re\{\\varepsilon_\mathrm{r}\}$", 
+      ticks=[-1e3, -1, 0, 1, 1e3]
+    )
     cb.set_ticklabels(["-$10^3$", -1, 0, 1, "$10^3$"])
 
   plt.ylim(plt.ylim())
@@ -177,12 +238,12 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
   )
 
   # Interpolate thicknesses to make plot smoother
-  interp_d = np.linspace(min(thickness), min(max(thickness), d_limit), (len(thickness)-1)*10+1) [::-1]
+  interp_d = np.linspace(min(thickness), min(max(thickness), d_limit), (len(thickness)-1)*upsample+1) [::-1]
   cmap = mpl.cm.viridis_r
   norm = mpl.colors.Normalize(vmin=min(interp_d), vmax=max(interp_d))
   colors_interp = cmap(norm(interp_d))
 
-  for pole, res in zip(poles_tracked.T, residues_tracked.T):
+  for i, (pole, res) in enumerate(zip(poles_tracked.T, residues_tracked.T)):
     real = np.interp(interp_d, thickness, pole.real)
     imag = np.interp(interp_d, thickness, pole.imag)
     s = np.interp(interp_d, thickness, np.abs(res))/(-imag)
@@ -201,11 +262,32 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
   else:
     plt.sca(axs[1])
 
-  for pole, res in zip(poles_tracked.T, residues_tracked.T):
-    real = np.interp(interp_d, thickness, pole.real)
-    imag = np.interp(interp_d, thickness, pole.imag)
-    s = np.interp(interp_d, thickness, np.abs(res))/(-imag)
-    plt.scatter(c_(real), interp_d, c=colors_interp, edgecolor='none', s=s, rasterized=True)
+  all_modes = set(range(len(poles_tracked.T)))
+  for i in range(1, num_modes+1):
+    selection, _ = select_modes(npoles, scale_osc, scale_damping, domain, modenumber=i)
+    all_modes -= set(selection)
+
+    for j, (pole, res) in enumerate(zip(poles_tracked.T[selection], residues_tracked.T[selection])):
+      real = np.interp(interp_d, thickness, pole.real)
+      imag = np.interp(interp_d, thickness, pole.imag)
+      s = np.interp(interp_d, thickness, np.abs(res))/(-imag)
+
+      c0_rgba = mcolors.to_rgba(f"C{i-1}")
+      c0_hsv = colorsys.rgb_to_hsv(*c0_rgba[:3])
+      new_saturation = c0_hsv[1] * ((npoles+1)-j)/(npoles+1)
+      new_rgb = colorsys.hsv_to_rgb(c0_hsv[0], new_saturation, c0_hsv[2])
+      new_rgba = (*new_rgb, c0_rgba[3])
+
+      c = colors_interp if color_thickness else new_rgba
+
+      plt.scatter(c_(real), interp_d, c=c, edgecolor='none', s=s, rasterized=True)
+  
+  all_modes = np.array(list(all_modes), dtype=int)
+  for pole, res in zip(poles_tracked.T[all_modes], residues_tracked.T[all_modes]):
+      real = np.interp(interp_d, thickness, pole.real)
+      imag = np.interp(interp_d, thickness, pole.imag)
+      s = np.interp(interp_d, thickness, np.abs(res))/(-imag)
+      plt.scatter(c_(real), interp_d, c="gray", edgecolor='none', s=s, rasterized=True)
 
   plt.ylim(0, max(interp_d))
   plt.xlim(min(c_(e_r)), max(c_(e_r)))
@@ -215,11 +297,16 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
     plt.ylabel(f"$d$ [{um}]")
     plt.xlabel(f"$\Re\{{{q_}\}}$ [{u_}]")
 
+  return pcm, cmap, norm
+
 # %%
 if __name__ == "__main__":
     plt.figure()
     plot_trajectories(1, 1, 1, domain, unit="THz", fig_width=90*mm, fig_height=50*mm)
     plt.savefig("out/SinglePole.pdf", dpi=1200)
+
+# %%
+# %matplotlib inline
 
     # %%
     plt.figure()
@@ -229,26 +316,45 @@ if __name__ == "__main__":
 
     # %%
     oscs = [1, 0.25, 0.1, 0.025, 0.01][0:-1]
-    plot_domain1 = [1.5-0.14j, 2+0.01j]
     plot_domain2 = [1.6-0.14j, 1.85+0.01j]
+    plot_domain1 = [1.5-0.14j, 2+0.01j]
 
     fig, axss = plt.subplots(
-        2, len(oscs), sharex="col", sharey="row",
-        figsize=(90*mm,50*mm), constrained_layout=True
+        2, len(oscs)+2, sharex="col",
+        figsize=(180*mm,50*mm), constrained_layout=True, width_ratios=[1]*len(oscs)+[0.03]*2
         )
-    for osc, axs in zip(oscs, axss.T):
-      plot_trajectories(
+    for osc, axs in zip(oscs[::-1], axss.T):
+      pcm, cmap, norm = plot_trajectories(
           1, osc, 1, domain, 
           plot_domain=plot_domain1 if osc==1 else plot_domain2, 
-          unit="THz", axs=axs, cbar=False, labels=False, d_limit=0.4
+          unit="THz", axs=axs, cbar=False, labels=False, d_limit=0.4, upsample=10
       )
       axs[0].set_title(f"{osc:.3f}")
 
-    axss[0,0].set_title("Scaled Oscillator Strength")
+
+    cb = plt.colorbar( pcm,
+      label="$\Re\{\\varepsilon_\mathrm{r}\}$", 
+      ticks=[-1e3, -1, 0, 1, 1e3], cax=axss[0, -1]
+    )
+    cb.set_ticklabels(["-$10^3$", -1, 0, 1, "$10^3$"])
+    mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
+    fig.colorbar(mappable, cax=axss[0, -2], label=f"$d$ [{um}]")
+
+    axss[0,0].set_title(f"Oscillator Strength Scaling:\n{oscs[-1]}")
     fig.supxlabel("$\Re\{f\}$ [THz]")
     axss[0,0].set_ylabel("$\Im\{f\}$ [THz]")
     axss[1,0].set_ylabel(f"$d$ [{um}]")
-    plt.savefig("out/OscReduction.pdf", dpi=600)
+
+    for axs in axss.T[1:-2]:
+      axs[0].sharey(axss[0,0])
+      axs[0].tick_params(axis='y',labelleft=False)
+      axs[1].sharey(axss[1,0])
+      axs[1].tick_params(axis='y',labelleft=False)
+
+    axss[1, -1].axis("off")
+    axss[1, -2].axis("off")
+    print("Start Rendering")
+    plt.savefig("out/OscReduction.pdf", dpi=1200)
 
     # %%
     # plot_thickness(3, 1, 1, domain)

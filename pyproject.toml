@@ -11,6 +11,7 @@ requires-python = ">=3.11"
 dependencies = [
     "diffaaable",
     "ipykernel>=6.29.5",
+    "ipympl>=0.9.6",
     "jax>=0.5.0",
     "jpu>=0.0.4",
     "matplotlib>=3.10.0",

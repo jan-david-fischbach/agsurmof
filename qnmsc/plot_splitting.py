@@ -16,7 +16,7 @@
 
 # %%
 from qnmsc.track_qnms import filename, track_qnms
-from qnmsc.plot_trajectories import plot_thickness, load_data
+from qnmsc.plot_trajectories import plot_thickness, load_data, select_modes
 from qnmsc import inverse_eigenproblem
 from qnmsc.mpl_config import um, inv_um, mm
 import numpy as np
@@ -26,62 +26,6 @@ import matplotlib.pyplot as plt
 if __name__ == "__main__":
   import qnmsc.mpl_config
   qnmsc.mpl_config.config()
-
-# %%
-domain = [1-0.5j, 2.5+0.05j]
-domain = [0.7-0.7j, 5.0+0.05j]
-
-# %%
-def label_tracked_qnms(poles_tracked, thickness):
-  plt.plot(thickness, poles_tracked.real, ".-")
-  for i, ptf in enumerate(poles_tracked.T):
-      filter = ~np.isnan(ptf)
-      if not np.any(filter):
-          continue
-      plt.annotate(f"p{i}", (thickness[filter][0],ptf[filter].real[0]), fontsize=5)
-      plt.annotate(f"p{i}", (thickness[filter][-1],ptf[filter].real[-1]),fontsize=5)
-  plt.xlabel(f"$d$ [{um}]")
-  plt.ylabel("$\hbar \omega$ [eV]")
-
-def select_modes(npoles, scale_osc, scale_damping, domain, modenumber=1, force=False):
-  fname = filename(npoles, scale_osc, scale_damping, domain)
-  select_fname = fname.parent/(fname.stem+f".select{modenumber}.npy")
-
-  if select_fname.is_file() and not force:
-    selection = np.load(select_fname)
-    return selection, modenumber
-
-  poles, residues, thickness, material_poles = load_data(
-    npoles, scale_osc, scale_damping, domain
-  )
-  poles_tracked, residues_tracked = track_qnms(poles, residues)
-
-  plot_thickness(npoles, scale_osc, scale_damping, domain, inv=False, horizontal=True)
-  label_tracked_qnms(poles_tracked, thickness)
-  plt.show(block=True)
-
-  while True:
-    print("Please select the modes as a comma separated list")
-    user_selection = input()
-    select = user_selection.split(",")
-    if len(select) != npoles + 1:
-      print("Please give npoles + 1 select")
-      continue
-
-    try:
-      select = [int(m) for m in select]
-    except:
-      print("Please provide the integer mode numbers only")
-      continue
-
-    select = np.array(select)
-    max_mode = poles_tracked.shape[1]
-    if np.any(select>max_mode):
-      print(f"Mode number too large: maximum is {max_mode}")
-      continue
-    
-    np.save(select_fname, select)
-    return select, modenumber
 
 # %%
 def plot_splitting(
@@ -187,7 +131,7 @@ def plot_splitting(
   plt.sca(axs[1])
   plt.axvline(rabi_param, color=c_grid, zorder=-1)
 
-  plt.ylabel("Coupling $c_i$ [eV]")
+  plt.ylabel("Coupling $\sqrt{\hat g_i g_i}$ [eV]")
   Cs = np.array(Cs)
   cs = np.sqrt(np.real(Cs))
   for i,coupling in enumerate(cs.T):
@@ -215,74 +159,78 @@ def plot_splitting(
   return fig, axs
 
 # %%
-from qnmsc.surmof_cavity import ag_surmof_cavity_smat
+if __name__ == "__main__":
+  from qnmsc.surmof_cavity import ag_surmof_cavity_smat
+  
+  domain = [1-0.5j, 2.5+0.05j]
+  domain = [0.7-0.7j, 5.0+0.05j]
 
-hbar_omega = np.linspace(1, 2.5, 401)
-inv_d = np.linspace(1/1.2, 14, 1021)
-E, T = np.meshgrid(hbar_omega, 1/inv_d)
+  hbar_omega = np.linspace(1, 2.5, 401)
+  inv_d = np.linspace(1/1.2, 14, 1021)
+  E, T = np.meshgrid(hbar_omega, 1/inv_d)
 
-smat = ag_surmof_cavity_smat( 
-  E, T
-)
+  smat = ag_surmof_cavity_smat( 
+    E, T
+  )
 
-# %%
-fig, axs = plt.subplots(2, 1, sharex=True, constrained_layout=True, figsize=(90*mm, 70*mm), height_ratios=[3,1.5])
-plt.sca(axs[0])
+  # %%
+  fig, axs = plt.subplots(2, 1, sharex=True, constrained_layout=True, figsize=(90*mm, 70*mm), height_ratios=[3,1.5])
+  plt.sca(axs[0])
 
-from matplotlib.colors import ListedColormap
-a = 0.7
-my_cmap = plt.cm.viridis(np.arange(plt.cm.viridis.N))
-my_cmap[:,0:3] *= a 
-my_cmap = ListedColormap(my_cmap)
+  from matplotlib.colors import ListedColormap
+  a = 0.7
+  my_cmap = plt.cm.viridis(np.arange(plt.cm.viridis.N))
+  my_cmap[:,0:3] *= a 
+  my_cmap = ListedColormap(my_cmap)
 
-plt.pcolormesh(1/T, E, np.abs(smat['in', 'out'])**2, zorder=-2, rasterized=True, shading='gouraud', cmap=my_cmap)
-cbar = plt.colorbar(label="Transmissivity")
+  plt.pcolormesh(1/T, E, np.abs(smat['in', 'out'])**2, zorder=-2, rasterized=True, shading='gouraud', cmap=my_cmap)
+  cbar = plt.colorbar(label="Transmissivity")
 
-plt.tick_params(which='both', color="white")
-cbar.ax.tick_params(which='both', color="white")
+  plt.tick_params(which='both', color="white")
+  cbar.ax.tick_params(which='both', color="white")
 
-for which, length, width in zip(['major', 'minor'], [3.5, 2], [0.5,0.5]):
-  plt.tick_params(which=which, length=length, width=width)
-  cbar.ax.tick_params(which=which, length=length, width=width)
+  for which, length, width in zip(['major', 'minor'], [3.5, 2], [0.5,0.5]):
+    plt.tick_params(which=which, length=length, width=width)
+    cbar.ax.tick_params(which=which, length=length, width=width)
 
-plot_splitting(1,3,1,1,domain, axs=axs,
-  c_fundamental="white",
-  c_higher="white",
-  c_grid=(0.4, 0.4, 0.4),
-  lw_higher=0.35,
-  c_fit="white",
-  c_font="white",
-  c_mat=["C9", "C1", "C2"],
-  force_legend=True,
-  xlim=(min(inv_d), max(inv_d)),
-  ylim=(min(hbar_omega), max(hbar_omega)),
-  legend_loc="lower right",
-  plot_dots=False
-)
+  plot_splitting(1,3,1,1,domain, axs=axs,
+    c_fundamental="white",
+    c_higher="white",
+    c_grid=(0.4, 0.4, 0.4),
+    lw_higher=0.35,
+    c_fit="white",
+    c_font="white",
+    c_mat=["C9", "C1", "C2"],
+    force_legend=True,
+    xlim=(min(inv_d), max(inv_d)),
+    ylim=(min(hbar_omega), max(hbar_omega)),
+    legend_loc="lower right",
+    plot_dots=False
+  )
 
-plt.savefig("out/Fit_Hamilonian_BG.pdf", dpi=600)
+  plt.savefig("out/Fit_Hamilonian_BG.pdf", dpi=600)
 
-# %%
-# %matplotlib inline
-fig, axs, om_os, cs = plot_splitting(1,3,1,1,domain, return_fit=True)
-plt.savefig("out/Fit_Hamiltonian.pdf")
+  # %%
+  # %matplotlib inline
+  fig, axs, om_os, cs = plot_splitting(1,3,1,1,domain, return_fit=True, plot_dots=False)
+  plt.savefig("out/Fit_Hamiltonian.pdf")
 
-# %%
-plot_splitting(1,1,1,1,domain, plot_dots=False)
-plt.savefig("out/Single_pole_splitting.pdf")
+  # %%
+  plot_splitting(1,1,1,1,domain, plot_dots=False)
+  plt.savefig("out/Single_pole_splitting.pdf")
 
-# %%
-## Experimentation
+  # %%
+  ## Experimentation
 
-# %%
-fig, axs, om_os1, cs1 = plot_splitting(1,1,1,1,domain, color_rabi="C0", return_fit=True)
-_, _,     om_os2, cs2 = plot_splitting(2,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
-_, _,     om_os2, cs2 = plot_splitting(3,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
-_, _,     om_os3, cs3 = plot_splitting(4,1,1,1,domain, color_rabi="C2", return_fit=True, axs=axs, xlim=(0.3, 12))
+  # %%
+  fig, axs, om_os1, cs1 = plot_splitting(1,1,1,1,domain, color_rabi="C0", return_fit=True)
+  _, _,     om_os2, cs2 = plot_splitting(2,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
+  _, _,     om_os2, cs2 = plot_splitting(3,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
+  _, _,     om_os3, cs3 = plot_splitting(4,1,1,1,domain, color_rabi="C2", return_fit=True, axs=axs, xlim=(0.3, 12))
 
-# %%
-plt.plot(om_os1, cs1)
-plt.plot(om_os2, cs2)
-plt.plot(om_os3, cs3)
+  # %%
+  plt.plot(om_os1, cs1)
+  plt.plot(om_os2, cs2)
+  plt.plot(om_os3, cs3)
 
 
