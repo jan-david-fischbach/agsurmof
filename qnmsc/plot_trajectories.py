@@ -18,6 +18,7 @@
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from qnmsc.mpl_config import um, inv_um, mm
+# %matplotlib inline
 # %config InlineBackend.figure_format='retina'
 
 if __name__=="__main__":
@@ -177,7 +178,7 @@ def plot_thickness(npoles, scale_osc, scale_damping, domain,
 def plot_trajectories(npoles, scale_osc, scale_damping, domain, 
   plot_domain = [1-0.06j, 2.5+0.01j], fig_width = 90*mm, fig_height = 80*mm,
   unit = "eV", axs=None, cbar=True, labels=True, plot_neg_eps_r=False, d_limit=np.inf, 
-  color_thickness=False, num_modes = 4, upsample=10
+  color_thickness=False, num_modes = 4, upsample=10, label_suffix=""
   ):
 
   c_ = unit_conversion[unit]
@@ -287,11 +288,21 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
       real = np.interp(interp_d, thickness, pole.real)
       imag = np.interp(interp_d, thickness, pole.imag)
       s = np.interp(interp_d, thickness, np.abs(res))/(-imag)
-      plt.scatter(c_(real), interp_d, c="gray", edgecolor='none', s=s, rasterized=True)
+      plt.scatter(c_(real), interp_d, c=[0.8,0.8,0.8], edgecolor='none', s=s, rasterized=True)
 
   plt.ylim(0, max(interp_d))
   plt.xlim(min(c_(e_r)), max(c_(e_r)))
   fig.align_ylabels()
+
+  for i, ax in enumerate(axs):
+    letter = chr(ord("a")+i)
+    ax.annotate(
+          f" ({letter}{label_suffix})",
+          xy=(0, 1), xycoords='axes fraction',
+          xytext=(+0.5, -0.5), textcoords='offset fontsize',
+          fontsize='medium', verticalalignment='top', fontfamily='serif',
+          bbox=dict(facecolor=(1,1,1,0.8), edgecolor='none', pad=2.0))
+
 
   if labels:
     plt.ylabel(f"$d$ [{um}]")
@@ -304,9 +315,6 @@ if __name__ == "__main__":
     plt.figure()
     plot_trajectories(1, 1, 1, domain, unit="THz", fig_width=90*mm, fig_height=50*mm)
     plt.savefig("out/SinglePole.pdf", dpi=1200)
-
-# %%
-# %matplotlib inline
 
     # %%
     plt.figure()
@@ -323,12 +331,16 @@ if __name__ == "__main__":
         2, len(oscs)+2, sharex="col",
         figsize=(180*mm,50*mm), constrained_layout=True, width_ratios=[1]*len(oscs)+[0.03]*2
         )
+
+    suffix = 1
     for osc, axs in zip(oscs[::-1], axss.T):
       pcm, cmap, norm = plot_trajectories(
           1, osc, 1, domain, 
           plot_domain=plot_domain1 if osc==1 else plot_domain2, 
-          unit="THz", axs=axs, cbar=False, labels=False, d_limit=0.4, upsample=10
+          unit="THz", axs=axs, cbar=False, labels=False, d_limit=0.4, 
+          upsample=10, label_suffix = suffix
       )
+      suffix += 1
       axs[0].set_title(f"{osc:.3f}")
 
 
@@ -366,6 +378,7 @@ if __name__ == "__main__":
     # plt.plot(e_r, eps_r)
 
 # %%
+
 
 
 

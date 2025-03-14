@@ -208,6 +208,15 @@ if __name__ == "__main__":
     plot_dots=False
   )
 
+  for i, ax in enumerate(axs):
+    letter = chr(ord("a")+i)
+    ax.annotate(
+          f" ({letter})",
+          xy=(0, 1), xycoords='axes fraction',
+          xytext=(+0.5, -0.5), textcoords='offset fontsize',
+          fontsize='medium', verticalalignment='top', fontfamily='serif',
+          bbox=dict(facecolor=(1,1,1,0.8), edgecolor='none', pad=2.0))
+
   plt.savefig("out/Fit_Hamilonian_BG.pdf", dpi=600)
 
   # %%
