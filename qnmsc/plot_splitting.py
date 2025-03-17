@@ -16,7 +16,7 @@
 
 # %%
 from qnmsc.track_qnms import filename, track_qnms
-from qnmsc.plot_trajectories import plot_thickness, load_data
+from qnmsc.plot_trajectories import plot_thickness, load_data, select_modes
 from qnmsc import inverse_eigenproblem
 from qnmsc.mpl_config import um, inv_um, mm
 import numpy as np
@@ -28,63 +28,6 @@ if __name__ == "__main__":
   qnmsc.mpl_config.config()
 
 # %%
-domain = [1-0.5j, 2.5+0.05j]
-domain = [0.7-0.7j, 5.0+0.05j]
-
-# %%
-def label_tracked_qnms(poles_tracked, thickness):
-  plt.plot(thickness, poles_tracked.real, ".-")
-  for i, ptf in enumerate(poles_tracked.T):
-      filter = ~np.isnan(ptf)
-      if not np.any(filter):
-          continue
-      plt.annotate(f"p{i}", (thickness[filter][0],ptf[filter].real[0]), fontsize=5)
-      plt.annotate(f"p{i}", (thickness[filter][-1],ptf[filter].real[-1]),fontsize=5)
-  plt.xlabel(f"$d$ [{um}]")
-  plt.ylabel("$\hbar \omega$ [eV]")
-
-def select_modes(npoles, scale_osc, scale_damping, domain, modenumber=1, force=False):
-  fname = filename(npoles, scale_osc, scale_damping, domain)
-  select_fname = fname.parent/(fname.stem+f".select{modenumber}.npy")
-
-  if select_fname.is_file() and not force:
-    selection = np.load(select_fname)
-    return selection, modenumber
-
-  poles, residues, thickness, material_poles = load_data(
-    npoles, scale_osc, scale_damping, domain
-  )
-  poles_tracked, residues_tracked = track_qnms(poles, residues)
-
-  plot_thickness(npoles, scale_osc, scale_damping, domain, inv=False, horizontal=True)
-  label_tracked_qnms(poles_tracked, thickness)
-  plt.show(block=True)
-
-  while True:
-    print("Please select the modes as a comma separated list")
-    user_selection = input()
-    select = user_selection.split(",")
-    if len(select) != npoles + 1:
-      print("Please give npoles + 1 select")
-      continue
-
-    try:
-      select = [int(m) for m in select]
-    except:
-      print("Please provide the integer mode numbers only")
-      continue
-
-    select = np.array(select)
-    max_mode = poles_tracked.shape[1]
-    if np.any(select>max_mode):
-      print(f"Mode number too large: maximum is {max_mode}")
-      continue
-    
-    np.save(select_fname, select)
-    return select, modenumber
-
-
-# %%
 def plot_splitting(
   modenumber, npoles, scale_osc, scale_damping, domain, 
   inv_d=True, ylim=(1.2, 2.5), xlim=(1,12), color_rabi="r",
@@ -93,10 +36,13 @@ def plot_splitting(
   c_grid        = (0.8, 0.8, 0.8),
   c_fundamental = "gray",
   c_higher      = (0, 0, 0, 0.2),
-  c_fit        = "k",
+  c_fit         = "k",
   c_font        = "k",
+  c_mat         = ["C0", "C1", "C2"],
+  lw_higher     = 1,
   force_legend  = False,
-  legend_loc    = 'best'
+  legend_loc    = 'best',
+  plot_dots     = True
   ):
 
   poles, residues, thickness, material_poles = load_data(
@@ -115,12 +61,14 @@ def plot_splitting(
     rabi_ok = True
   except ValueError as e:
     rabi_ok = False
-
+  print(f"QNMs at rabi: {selected[rabi_idx, :]}")
+  
   def populate_legend():
     plt.plot([],[], color=c_fundamental, label="fundamental QNMs")
-    plt.plot([],[], color=c_higher, linewidth=1, label="higher order QNMs")
-    plt.plot([],[], color=c_fit, linestyle="none", marker=".", label="coupling fit")
-    plt.plot([],[], "--", color=c_os, zorder=5, label="'uncoupled' cavity mode\n(from fit)")
+    plt.plot([],[], color=c_higher, linewidth=lw_higher, label="higher order QNMs")
+    plt.plot([],[], "--", color=c_os, zorder=5, label="'uncoupled' cavity mode")
+    if plot_dots:
+      plt.plot([],[], color=c_fit, linestyle="none", marker=".", label="coupling fit")
 
   param = 1/thickness if inv_d else thickness
   rabi_param = param[rabi_idx]
@@ -157,7 +105,12 @@ def plot_splitting(
       om_os.append(om_o)
       evs_fit.append(inverse_eigenproblem.test_fwd_eig(om_o, material_poles, np.sqrt(couplings)))
 
-  plt.plot(param_interp, np.array(evs_fit).real, color=c_fit, linestyle="none", marker=".")
+  if npoles == 1:
+    resonance_idx = np.nanargmin(np.abs(np.array(om_os).real - material_poles[0].real))
+    print(f"QNMs at res: {np.array(evs_fit)[resonance_idx, :]}")
+
+  if plot_dots:
+    plt.plot(param_interp, np.array(evs_fit).real, color=c_fit, linestyle="none", marker=".")
   plt.plot(param_interp, np.array(om_os).real, "--", color=c_os, zorder=5)
   plt.vlines(
     [rabi_param],*f_mode[rabi_idx, [0, -1]], color=color_rabi, 
@@ -168,25 +121,31 @@ def plot_splitting(
   plt.legend(fontsize=6, labelcolor=c_font, loc=legend_loc)
 
   for i,mat_pole in enumerate(material_poles):
-      plt.axhline(mat_pole.real, color=f"C{i}")#, linestyle="--")
+      plt.axhline(mat_pole.real, color=c_mat[i],)#, linestyle="--")
 
-  for pole in poles_tracked.T:
-    plt.plot(param, pole.real, color=c_higher, linewidth=1, zorder=-1)
+  for pole in poles_tracked.T: # higher order modes
+    plt.plot(param, pole.real, color=c_higher, linewidth=lw_higher, zorder=-1)
 
   plt.axvline(rabi_param, color=c_grid, zorder=-1)
   plt.ylim(ylim)
   plt.sca(axs[1])
   plt.axvline(rabi_param, color=c_grid, zorder=-1)
 
-  plt.ylabel("Coupling $c_i$ [eV]")
+  plt.ylabel("Coupling $\sqrt{\hat g_i g_i}$ [eV]")
   Cs = np.array(Cs)
   cs = np.sqrt(np.real(Cs))
   for i,coupling in enumerate(cs.T):
-      plt.plot(param_interp, coupling, ".-", label=f"$p_{i+1}=\complexqty{{{material_poles[i]:.3f}}}{{eV}}$")
+      plt.plot(param_interp, coupling, ".-" if plot_dots else "-", color=c_mat[i], label=f"$p_{i+1}=\complexqty{{{material_poles[i]:.3f}}}{{eV}}$")
+
+  gamma_avg = -np.sum(np.array(evs_fit), axis=-1).imag/(npoles+1) * cs[:,0]/cs[:,0]
+  gamma_avg_res = np.interp(rabi_param, param_interp, gamma_avg)
+
+  plt.plot(param_interp, gamma_avg, color="k", label=f"$\gamma_\mathrm{{avg}} = {gamma_avg_res:.3f}$ eV @ $\delta = 0$")
+  
   stud = 0.1
   x = [rabi_param-stud,rabi_param+stud]
   plt.plot(x, [f_rabi.real/2]*2, color="r")
-  plt.ylim(0, 1.1*max(f_rabi.real/2, np.nanmax(cs.flatten())))
+  #plt.ylim(0, 1.1*max(f_rabi.real/2, np.nanmax(cs.flatten())))
 
   plt.legend(fontsize=6, title="Material Resonances", loc="lower right", frameon=True)
   if inv_d:
@@ -200,38 +159,88 @@ def plot_splitting(
   return fig, axs
 
 # %%
-from qnmsc.surmof_cavity import ag_surmof_cavity_smat
+if __name__ == "__main__":
+  from qnmsc.surmof_cavity import ag_surmof_cavity_smat
+  
+  domain = [1-0.5j, 2.5+0.05j]
+  domain = [0.7-0.7j, 5.0+0.05j]
 
-hbar_omega = np.linspace(1, 2.5, 401)
-inv_d = np.linspace(1, 14, 421)
-E, T = np.meshgrid(hbar_omega, 1/inv_d)
+  hbar_omega = np.linspace(1, 2.5, 401)
+  inv_d = np.linspace(1/1.2, 14, 1021)
+  E, T = np.meshgrid(hbar_omega, 1/inv_d)
 
-smat = ag_surmof_cavity_smat( 
-  E, T
-)
+  smat = ag_surmof_cavity_smat( 
+    E, T
+  )
 
-# %%
-fig, axs = plt.subplots(2, 1, sharex=True, constrained_layout=True, figsize=(90*mm, 90*mm), height_ratios=[3,1])
-plt.sca(axs[0])
-plt.pcolormesh(1/T, E, np.abs(smat['in', 'out'])**2, zorder=-2, rasterized=True)
-plt.colorbar(label="Transmissivity")
-plot_splitting(1,3,1,1,domain, axs=axs,
-  c_fundamental="white",
-  c_higher=(1,1,1,0.5),
-  c_fit="white",
-  c_font="white",
-  force_legend=True,
-  xlim=(min(inv_d), max(inv_d)),
-  ylim=(min(hbar_omega), max(hbar_omega)),
-  legend_loc="lower right"
-)
+  # %%
+  fig, axs = plt.subplots(2, 1, sharex=True, constrained_layout=True, figsize=(90*mm, 70*mm), height_ratios=[3,1.5])
+  plt.sca(axs[0])
 
-plt.savefig("out/Fit_Hamilonian_BG.pdf", dpi=600)
+  from matplotlib.colors import ListedColormap
+  a = 0.7
+  my_cmap = plt.cm.viridis(np.arange(plt.cm.viridis.N))
+  my_cmap[:,0:3] *= a 
+  my_cmap = ListedColormap(my_cmap)
 
-# %%
-# %matplotlib inline
-plot_splitting(1,3,1,1,domain)
-plt.savefig("out/Fit_Hamiltonian.pdf")
+  plt.pcolormesh(1/T, E, np.abs(smat['in', 'out'])**2, zorder=-2, rasterized=True, shading='gouraud', cmap=my_cmap)
+  cbar = plt.colorbar(label="Transmissivity")
+
+  plt.tick_params(which='both', color="white")
+  cbar.ax.tick_params(which='both', color="white")
+
+  for which, length, width in zip(['major', 'minor'], [3.5, 2], [0.5,0.5]):
+    plt.tick_params(which=which, length=length, width=width)
+    cbar.ax.tick_params(which=which, length=length, width=width)
+
+  plot_splitting(1,3,1,1,domain, axs=axs,
+    c_fundamental="white",
+    c_higher="white",
+    c_grid=(0.4, 0.4, 0.4),
+    lw_higher=0.35,
+    c_fit="white",
+    c_font="white",
+    c_mat=["C9", "C1", "C2"],
+    force_legend=True,
+    xlim=(min(inv_d), max(inv_d)),
+    ylim=(min(hbar_omega), max(hbar_omega)),
+    legend_loc="lower right",
+    plot_dots=False
+  )
+
+  for i, ax in enumerate(axs):
+    letter = chr(ord("a")+i)
+    ax.annotate(
+          f" ({letter})",
+          xy=(0, 1), xycoords='axes fraction',
+          xytext=(+0.5, -0.5), textcoords='offset fontsize',
+          fontsize='medium', verticalalignment='top', fontfamily='serif',
+          bbox=dict(facecolor=(1,1,1,0.8), edgecolor='none', pad=2.0))
+
+  plt.savefig("out/Fit_Hamilonian_BG.pdf", dpi=600)
+
+  # %%
+  # %matplotlib inline
+  fig, axs, om_os, cs = plot_splitting(1,3,1,1,domain, return_fit=True, plot_dots=False)
+  plt.savefig("out/Fit_Hamiltonian.pdf")
+
+  # %%
+  plot_splitting(1,1,1,1,domain, plot_dots=False)
+  plt.savefig("out/Single_pole_splitting.pdf")
+
+  # %%
+  ## Experimentation
+
+  # %%
+  fig, axs, om_os1, cs1 = plot_splitting(1,1,1,1,domain, color_rabi="C0", return_fit=True)
+  _, _,     om_os2, cs2 = plot_splitting(2,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
+  _, _,     om_os2, cs2 = plot_splitting(3,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
+  _, _,     om_os3, cs3 = plot_splitting(4,1,1,1,domain, color_rabi="C2", return_fit=True, axs=axs, xlim=(0.3, 12))
+
+  # %%
+  plt.plot(om_os1, cs1)
+  plt.plot(om_os2, cs2)
+  plt.plot(om_os3, cs3)
 
 
 # %%

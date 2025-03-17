@@ -27,6 +27,7 @@ def sum_pair_prod(vec):
     return np.sum(mat)/2
 
 def get_coupling(evs, oms):
+  """For two material poles"""
   om_o = np.sum(evs) - np.sum(oms)
   om_a, om_b = oms
   oms = np.array([om_o, om_a, om_b])
@@ -54,6 +55,7 @@ def vec_b(evs, oms):
   return P_lam(evs, oms)*evs
   
 def solve_inv_eig(evs, oms):
+  """For an arbitrary number of material poles"""
   evs=np.atleast_1d(evs)
   oms=np.atleast_1d(oms)
   if evs.shape[-1]!=oms.shape[-1]+1:
@@ -76,7 +78,7 @@ def test_fwd_eig(om_o, oms, coupling):
 
 
 if __name__=="__main__":
-    a,b = 0.5+2j, 0.8-1j
+    a,b = 1j, 2
     H, *oms = example_hamiltonian(a,b)
     evs = np.linalg.eigvals(H)
     A,B, om_o = get_coupling(evs, oms)
