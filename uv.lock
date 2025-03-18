@@ -1500,6 +1500,7 @@ dependencies = [
     { name = "pyqt6" },
     { name = "scienceplots" },
     { name = "staaax" },
+    { name = "treams" },
 ]
 
 [package.metadata]
@@ -1513,6 +1514,7 @@ requires-dist = [
     { name = "pyqt6", specifier = ">=6.8.1" },
     { name = "scienceplots", specifier = ">=2.1.1" },
     { name = "staaax", specifier = ">=0.2.0" },
+    { name = "treams", url = "https://github.com/jan-david-fischbach/jat/releases/download/v0.5.0/treams-0.5.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl" },
 ]
 
 [[package]]
@@ -1733,6 +1735,15 @@ wheels = [
 ]
 
 [[package]]
+name = "threadpoolctl"
+version = "3.6.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b7/4d/08c89e34946fce2aec4fbb45c9016efd5f4d7f24af8e5d93296e935631d8/threadpoolctl-3.6.0.tar.gz", hash = "sha256:8ab8b4aa3491d812b623328249fab5302a68d2d71745c8a4c719a2fcaba9f44e", size = 21274 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/32/d5/f9a850d79b0851d1d4ef6456097579a9005b31fea68726a4ae5f2d82ddd9/threadpoolctl-3.6.0-py3-none-any.whl", hash = "sha256:43a0b8fd5a2928500110039e43a5eed8480b918967083ea48dc3ab9f13c4a7fb", size = 18638 },
+]
+
+[[package]]
 name = "toolz"
 version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1782,22 +1793,32 @@ wheels = [
 
 [[package]]
 name = "treams"
-version = "0.4.5"
-source = { registry = "https://pypi.org/simple" }
+version = "0.5.0"
+source = { url = "https://github.com/jan-david-fischbach/jat/releases/download/v0.5.0/treams-0.5.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl" }
 dependencies = [
+    { name = "jax" },
+    { name = "jaxlib" },
     { name = "numpy" },
     { name = "scipy" },
+    { name = "threadpoolctl" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/91/2c/3ea82d77f9142665ac73f5bf87b8149c66e373904aa0348997538c810d06/treams-0.4.5-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:c67a9507a9fc76fcd87bb86a1d9c6c030faa3398efbf5f039b4ef9217cc10f00", size = 991506 },
-    { url = "https://files.pythonhosted.org/packages/d4/a9/6045e11687b0ca2bffe334244a312faf33f0786d718a2af0d463d7635d6c/treams-0.4.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a6a8723518f75f1a25ceecc5fb88a6318471147dc15cb881b61a4e25a34d15fd", size = 6205175 },
-    { url = "https://files.pythonhosted.org/packages/e3/a9/d1ee784c04b823f77e4c620e05b5f7cc19fa18cdb2f894ec61545718802c/treams-0.4.5-cp311-cp311-win_amd64.whl", hash = "sha256:850df569923931a50f06d668cfe12496160124d4429e94c8a792cc3201b2ef05", size = 1577136 },
-    { url = "https://files.pythonhosted.org/packages/63/41/41e5b02542b9d32c83193cf4469bf623df1762369a5c667fb5156220b46c/treams-0.4.5-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:6b23396c47d66c7463272ad250dbaa61c0c9fe0347f1d473574c4032a4d5dc2c", size = 999472 },
-    { url = "https://files.pythonhosted.org/packages/47/ad/70226bfbb9f49903a685b22a3a6c065c86d443eefaf1f5b57b798d8d200b/treams-0.4.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:01da57f3a8a7c54336b2074398b6b72fd11a1e6923265bec3c569d602dc3c79d", size = 6144017 },
-    { url = "https://files.pythonhosted.org/packages/a2/ce/dee2900b9d30ccb7c4b3d6aeb1d5ac74ce59253d71c305c0a9684ea848fe/treams-0.4.5-cp312-cp312-win_amd64.whl", hash = "sha256:10722c0cff890f93c1c9e1a734d0ad184cfdeaaa5da3b9da748e368694a8b7f8", size = 1631216 },
-    { url = "https://files.pythonhosted.org/packages/e9/f4/9c17a1e27ad61a8b811bf8a9bae8c2855300d6d2e268558eb702d4855fc1/treams-0.4.5-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:327a1e2a353dbdddd33fa764f87f95b9af39f934c9ba984808e071b2ba5afddc", size = 984391 },
-    { url = "https://files.pythonhosted.org/packages/31/28/92d80fe17aab60da75c9b0c75e21221c2d042287ade37f0f70fa967bd514/treams-0.4.5-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2268805a63820f62c73e2f7cc80c3b7ecf8f3e042e7f43019cb7dfb94940db3f", size = 6038209 },
-    { url = "https://files.pythonhosted.org/packages/29/3d/01c54e04c436d12be0be3b4627a135c712719305d5c50ebe8bf06fd1b81a/treams-0.4.5-cp313-cp313-win_amd64.whl", hash = "sha256:eeb99a329d457106b2e09d68b6d10c5f46e1fc721aa6a48e248286064ffb974c", size = 1623307 },
+    { url = "https://github.com/jan-david-fischbach/jat/releases/download/v0.5.0/treams-0.5.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ed13a4f59e35ac9aabf905d0b020e6107b60aa54729611ea94f5646951deba03" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "cython", marker = "extra == 'coverage'" },
+    { name = "h5py", marker = "extra == 'io'" },
+    { name = "jax" },
+    { name = "jaxlib" },
+    { name = "matplotlib", marker = "extra == 'docs'" },
+    { name = "numpy" },
+    { name = "pytest", marker = "extra == 'test'" },
+    { name = "pytest-cov", marker = "extra == 'coverage'" },
+    { name = "scipy", specifier = ">=1.6" },
+    { name = "sphinx", marker = "extra == 'docs'" },
+    { name = "threadpoolctl" },
 ]
 
 [[package]]
