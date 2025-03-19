@@ -63,10 +63,10 @@ def load_data(npoles, scale_osc, scale_damping, domain):
 
   poles = results['poles']
   residues = results['residues']
-  thickness = results['thickness']
-  thickness=np.array(thickness)
+  radius = results['radius']
+  radius=np.array(radius)
   material_poles = to_eV(calc_material_poles(scale_osc, scale_damping))[:npoles]
-  return poles, residues, thickness, material_poles
+  return poles, residues, radius, material_poles
 
 # %%
 def to_THz(hbar_omega):
@@ -88,14 +88,14 @@ qty_str = {
 }
 
 # %%
-def label_tracked_qnms(poles_tracked, thickness):
-  plt.plot(thickness, poles_tracked.real, ".-")
+def label_tracked_qnms(poles_tracked, radius):
+  plt.plot(radius, poles_tracked.real, ".-")
   for i, ptf in enumerate(poles_tracked.T):
       filter = ~np.isnan(ptf)
       if not np.any(filter):
           continue
-      plt.annotate(f"p{i}", (thickness[filter][0],ptf[filter].real[0]), fontsize=5)
-      plt.annotate(f"p{i}", (thickness[filter][-1],ptf[filter].real[-1]),fontsize=5)
+      plt.annotate(f"p{i}", (radius[filter][0],ptf[filter].real[0]), fontsize=5)
+      plt.annotate(f"p{i}", (radius[filter][-1],ptf[filter].real[-1]),fontsize=5)
   plt.xlabel(f"$d$ [{um}]")
   plt.ylabel("$\hbar \omega$ [eV]")
   
@@ -107,14 +107,14 @@ def select_modes(npoles, scale_osc, scale_damping, domain, modenumber=1, force=F
     selection = np.load(select_fname)
     return selection, modenumber
 
-  poles, residues, thickness, material_poles = load_data(
+  poles, residues, radius, material_poles = load_data(
     npoles, scale_osc, scale_damping, domain
   )
   poles_tracked, residues_tracked = track_qnms(poles, residues)
 
   plt.figure("Select Modes")
-  plot_thickness(npoles, scale_osc, scale_damping, domain, inv=False, horizontal=True)
-  label_tracked_qnms(poles_tracked, thickness)
+  plot_radius(npoles, scale_osc, scale_damping, domain, inv=False, horizontal=True)
+  label_tracked_qnms(poles_tracked, radius)
   plt.title(f"Select Modes m={modenumber}")
   plt.show(block=True)
 
@@ -143,15 +143,15 @@ def select_modes(npoles, scale_osc, scale_damping, domain, modenumber=1, force=F
     return select, modenumber
 
 # %%
-def plot_thickness(npoles, scale_osc, scale_damping, domain, 
-  unit = "eV", inv=True, horizontal=False
+def plot_radius(npoles, scale_osc, scale_damping, domain, 
+  unit = "eV", inv=True, horizontal=False, use_alpha=False
   ):
 
-  poles, residues, thickness, material_poles = load_data(
+  poles, residues, radius, material_poles = load_data(
     npoles, scale_osc, scale_damping, domain
   )
 
-  for t, p, r in zip(thickness, poles, residues):
+  for t, p, r in zip(radius, poles, residues):
     if p.size:
       p = unit_conversion[unit](p)
       y = 1/t if inv else t
@@ -159,15 +159,16 @@ def plot_thickness(npoles, scale_osc, scale_damping, domain,
       x = np.real(p)
       if horizontal:
         x,y = y,x
+      alpha = np.clip(10*np.sqrt(np.abs(r)), 0, 1) if use_alpha else 1
       plt.scatter(x, y, color="k", marker=".", 
-              alpha=np.clip(10*np.sqrt(np.abs(r)), 0, 1))
+              alpha=alpha)
 
   xlabel = f"$\Re\{{{qty_str[unit]}\}}$ [{unit_str[unit]}]"
   if inv:
-    ylabel = f"$1/d$ [{inv_um}]"
+    ylabel = f"$1/r$ [{inv_um}]"
     plt.ylim(0, 8)
   else:
-    ylabel = f"$d$ [{um}]"
+    ylabel = f"$r$ [{um}]"
 
   if horizontal:
     xlabel, ylabel = ylabel, xlabel
@@ -178,14 +179,14 @@ def plot_thickness(npoles, scale_osc, scale_damping, domain,
 def plot_trajectories(npoles, scale_osc, scale_damping, domain, 
   plot_domain = [1-0.06j, 2.5+0.01j], fig_width = 90*mm, fig_height = 80*mm,
   unit = "eV", axs=None, cbar=True, labels=True, plot_neg_eps_r=False, d_limit=np.inf, 
-  color_thickness=False, num_modes = 4, upsample=10, label_suffix=""
+  color_radius=False, num_modes = 4, upsample=10, label_suffix=""
   ):
 
   c_ = unit_conversion[unit]
   u_ = unit_str[unit]
   q_ = qty_str[unit]
 
-  poles, residues, thickness, material_poles = load_data(
+  poles, residues, radius, material_poles = load_data(
     npoles, scale_osc, scale_damping, domain
   )
   poles_tracked, residues_tracked = track_qnms(poles, residues)
@@ -238,16 +239,16 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
     facecolors='none', edgecolors="k", linewidths=1
   )
 
-  # Interpolate thicknesses to make plot smoother
-  interp_d = np.linspace(min(thickness), min(max(thickness), d_limit), (len(thickness)-1)*upsample+1) [::-1]
+  # Interpolate radiuses to make plot smoother
+  interp_d = np.linspace(min(radius), min(max(radius), d_limit), (len(radius)-1)*upsample+1) [::-1]
   cmap = mpl.cm.viridis_r
   norm = mpl.colors.Normalize(vmin=min(interp_d), vmax=max(interp_d))
   colors_interp = cmap(norm(interp_d))
 
   for i, (pole, res) in enumerate(zip(poles_tracked.T, residues_tracked.T)):
-    real = np.interp(interp_d, thickness, pole.real)
-    imag = np.interp(interp_d, thickness, pole.imag)
-    s = np.interp(interp_d, thickness, np.abs(res))/(-imag)
+    real = np.interp(interp_d, radius, pole.real)
+    imag = np.interp(interp_d, radius, pole.imag)
+    s = np.interp(interp_d, radius, np.abs(res))/(-imag)
     plt.scatter(c_(real), c_(imag), c=colors_interp, edgecolor='none', s=s, rasterized=True)
 
   if labels:
@@ -269,9 +270,9 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
     all_modes -= set(selection)
 
     for j, (pole, res) in enumerate(zip(poles_tracked.T[selection], residues_tracked.T[selection])):
-      real = np.interp(interp_d, thickness, pole.real)
-      imag = np.interp(interp_d, thickness, pole.imag)
-      s = np.interp(interp_d, thickness, np.abs(res))/(-imag)
+      real = np.interp(interp_d, radius, pole.real)
+      imag = np.interp(interp_d, radius, pole.imag)
+      s = np.interp(interp_d, radius, np.abs(res))/(-imag)
 
       c0_rgba = mcolors.to_rgba(f"C{i-1}")
       c0_hsv = colorsys.rgb_to_hsv(*c0_rgba[:3])
@@ -279,15 +280,15 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
       new_rgb = colorsys.hsv_to_rgb(c0_hsv[0], new_saturation, c0_hsv[2])
       new_rgba = (*new_rgb, c0_rgba[3])
 
-      c = colors_interp if color_thickness else new_rgba
+      c = colors_interp if color_radius else new_rgba
 
       plt.scatter(c_(real), interp_d, c=c, edgecolor='none', s=s, rasterized=True)
   
   all_modes = np.array(list(all_modes), dtype=int)
   for pole, res in zip(poles_tracked.T[all_modes], residues_tracked.T[all_modes]):
-      real = np.interp(interp_d, thickness, pole.real)
-      imag = np.interp(interp_d, thickness, pole.imag)
-      s = np.interp(interp_d, thickness, np.abs(res))/(-imag)
+      real = np.interp(interp_d, radius, pole.real)
+      imag = np.interp(interp_d, radius, pole.imag)
+      s = np.interp(interp_d, radius, np.abs(res))/(-imag)
       plt.scatter(c_(real), interp_d, c=[0.8,0.8,0.8], edgecolor='none', s=s, rasterized=True)
 
   plt.ylim(0, max(interp_d))
@@ -313,72 +314,9 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
 # %%
 if __name__ == "__main__":
     plt.figure()
-    plot_trajectories(1, 1, 1, domain, unit="THz", fig_width=90*mm, fig_height=50*mm)
-    plt.savefig("out/SinglePole.pdf", dpi=1200)
-
-    # %%
-    plt.figure()
-    plot_trajectories(3, 1, 1, domain, unit="THz", plot_neg_eps_r=True, fig_width=90*mm, fig_height=50*mm, cbar=False)
-    plt.xlim(350, 500)
-    plt.savefig("out/ThreePole.pdf", dpi=1200)
-
-    # %%
-    oscs = [1, 0.25, 0.1, 0.025, 0.01][0:-1]
-    plot_domain2 = [1.6-0.14j, 1.85+0.01j]
-    plot_domain1 = [1.5-0.14j, 2+0.01j]
-
-    fig, axss = plt.subplots(
-        2, len(oscs)+2, sharex="col",
-        figsize=(180*mm,50*mm), constrained_layout=True, width_ratios=[1]*len(oscs)+[0.03]*2
-        )
-
-    suffix = 1
-    for osc, axs in zip(oscs[::-1], axss.T):
-      pcm, cmap, norm = plot_trajectories(
-          1, osc, 1, domain, 
-          plot_domain=plot_domain1 if osc==1 else plot_domain2, 
-          unit="THz", axs=axs, cbar=False, labels=False, d_limit=0.4, 
-          upsample=10, label_suffix = suffix
-      )
-      suffix += 1
-      axs[0].set_title(f"{osc:.3f}")
-
-
-    cb = plt.colorbar( pcm,
-      label="$\Re\{\\varepsilon_\mathrm{r}\}$", 
-      ticks=[-1e3, -1, 0, 1, 1e3], cax=axss[0, -1]
-    )
-    cb.set_ticklabels(["-$10^3$", -1, 0, 1, "$10^3$"])
-    mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
-    fig.colorbar(mappable, cax=axss[0, -2], label=f"$d$ [{um}]")
-
-    axss[0,0].set_title(f"Oscillator Strength Scaling:\n{oscs[-1]}")
-    fig.supxlabel("$\Re\{f\}$ [THz]")
-    axss[0,0].set_ylabel("$\Im\{f\}$ [THz]")
-    axss[1,0].set_ylabel(f"$d$ [{um}]")
-
-    for axs in axss.T[1:-2]:
-      axs[0].sharey(axss[0,0])
-      axs[0].tick_params(axis='y',labelleft=False)
-      axs[1].sharey(axss[1,0])
-      axs[1].tick_params(axis='y',labelleft=False)
-
-    axss[1, -1].axis("off")
-    axss[1, -2].axis("off")
-    print("Start Rendering")
-    plt.savefig("out/OscReduction.pdf", dpi=1200)
-
-    # %%
-    # plot_thickness(3, 1, 1, domain)
-    # plot_thickness(3, 1, 1, domain, inv=False)
-
-    # %%
-    # e_r = np.linspace(1, 2.5, 1200)
-    # eps_r = eps_surmof(e_r, 1, 1, 1)
-    # plt.plot(e_r, eps_r)
+    plot_radius(3, 1, 1, domain, inv=False)
+    plt.savefig("out/Elli.pdf", dpi=1200)
 
 # %%
 
-
-
-
+# %%
