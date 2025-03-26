@@ -144,7 +144,7 @@ def select_modes(npoles, scale_osc, scale_damping, domain, modenumber=1, force=F
 
 # %%
 def plot_radius(npoles, scale_osc, scale_damping, domain, 
-  unit = "eV", inv=True, horizontal=False, use_alpha=False
+  unit = "eV", inv=True, horizontal=False, use_alpha=False, resize=False
   ):
 
   poles, residues, radius, material_poles = load_data(
@@ -160,8 +160,9 @@ def plot_radius(npoles, scale_osc, scale_damping, domain,
       if horizontal:
         x,y = y,x
       alpha = np.clip(10*np.sqrt(np.abs(r)), 0, 1) if use_alpha else 1
+      size = np.abs(r)/np.abs(p.imag)**2 * 1e-6
       plt.scatter(x, y, color="k", marker=".", 
-              alpha=alpha)
+              alpha=alpha, s=size)
 
   xlabel = f"$\Re\{{{qty_str[unit]}\}}$ [{unit_str[unit]}]"
   if inv:
@@ -314,7 +315,7 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
 # %%
 if __name__ == "__main__":
     plt.figure()
-    plot_radius(3, 1, 1, domain, inv=False)
+    plot_radius(3, 1, 1, domain, inv=False, resize=True)
     plt.savefig("out/Elli.pdf", dpi=1200)
 
 # %%
