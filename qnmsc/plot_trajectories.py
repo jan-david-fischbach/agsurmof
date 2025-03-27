@@ -313,6 +313,10 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
 # %%
 if __name__ == "__main__":
     plt.figure()
+    plot_trajectories(0, 1, 1, domain, unit="THz", fig_width=90*mm, fig_height=50*mm)
+    plt.savefig("out/NoPole.pdf", dpi=1200)
+
+    plt.figure()
     plot_trajectories(1, 1, 1, domain, unit="THz", fig_width=90*mm, fig_height=50*mm)
     plt.savefig("out/SinglePole.pdf", dpi=1200)
 

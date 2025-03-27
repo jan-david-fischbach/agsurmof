@@ -7,7 +7,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.11.2
+#       jupytext_version: 1.16.7
 #   kernelspec:
 #     display_name: .venv
 #     language: python
@@ -66,7 +66,7 @@ def plot_splitting(
   def populate_legend():
     plt.plot([],[], color=c_fundamental, label="fundamental QNMs")
     plt.plot([],[], color=c_higher, linewidth=lw_higher, label="higher order QNMs")
-    plt.plot([],[], "--", color=c_os, zorder=5, label="'uncoupled' cavity mode")
+    plt.plot([],[], "--", color=c_os, zorder=5, label="fit 'uncoupled' cavity mode")
     if plot_dots:
       plt.plot([],[], color=c_fit, linestyle="none", marker=".", label="coupling fit")
 
@@ -118,7 +118,7 @@ def plot_splitting(
     zorder=6
   )
   plt.ylabel("$\hbar \omega$ [eV]")
-  plt.legend(fontsize=6, labelcolor=c_font, loc=legend_loc)
+  plt.legend(fontsize=5, labelcolor=c_font, loc=legend_loc)
 
   for i,mat_pole in enumerate(material_poles):
       plt.axhline(mat_pole.real, color=c_mat[i],)#, linestyle="--")
@@ -162,7 +162,7 @@ def plot_splitting(
 if __name__ == "__main__":
   from qnmsc.surmof_cavity import ag_surmof_cavity_smat
   
-  domain = [1-0.5j, 2.5+0.05j]
+  domain0 = [1-0.5j, 2.5+0.05j]
   domain = [0.7-0.7j, 5.0+0.05j]
 
   hbar_omega = np.linspace(1, 2.5, 401)
@@ -185,6 +185,13 @@ if __name__ == "__main__":
 
   plt.pcolormesh(1/T, E, np.abs(smat['in', 'out'])**2, zorder=-2, rasterized=True, shading='gouraud', cmap=my_cmap)
   cbar = plt.colorbar(label="Transmissivity")
+
+  poles, residues, thickness, material_poles = load_data(
+    0, 1, 1, domain0
+  )
+  poles_tracked, residues_tracked = track_qnms(poles, residues)
+  plt.plot(1/thickness, poles_tracked, ".", color="white", alpha=0.6)
+  plt.plot([],[], ".", color="white", alpha=0.6, label="0 pole modes")
 
   plt.tick_params(which='both', color="white")
   cbar.ax.tick_params(which='both', color="white")

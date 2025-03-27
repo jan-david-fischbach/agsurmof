@@ -170,7 +170,7 @@ if __name__ == "__main__":
   ts = 0.005*(np.arange(1, 120)+1)
   domain = [1-0.5j, 2.5+0.05j]
 
-  for npoles in [1,3]:
+  for npoles in [0, 1,3]:
     all_poles, all_residues = find_qnms(
       ts, npoles=npoles, osc_strength=1, damping=1, domain=domain, 
       checkpointing=True
