@@ -66,7 +66,7 @@ def plot_splitting(
   def populate_legend():
     plt.plot([],[], color=c_fundamental, label="fundamental QNMs")
     plt.plot([],[], color=c_higher, linewidth=lw_higher, label="higher order QNMs")
-    plt.plot([],[], "--", color=c_os, zorder=5, label="fit 'uncoupled' cavity mode")
+    plt.plot([],[], "--", color=c_os, zorder=5, label="'uncoupled' cavity mode")
     if plot_dots:
       plt.plot([],[], color=c_fit, linestyle="none", marker=".", label="coupling fit")
 
@@ -155,7 +155,7 @@ def plot_splitting(
       fig.supxlabel("Cavity Thickness [um]")
 
   if return_fit:
-    return fig, axs, om_os, cs
+    return fig, axs, om_os, Cs, param_interp
   return fig, axs
 
 # %%
@@ -174,7 +174,7 @@ if __name__ == "__main__":
   )
 
   # %%
-  fig, axs = plt.subplots(2, 1, sharex=True, constrained_layout=True, figsize=(90*mm, 70*mm), height_ratios=[3,1.5])
+  fig, axs = plt.subplots(2, 1, sharex=True, constrained_layout=True, figsize=(90*mm, 80*mm), height_ratios=[3.5,1.5])
   plt.sca(axs[0])
 
   from matplotlib.colors import ListedColormap
@@ -186,12 +186,12 @@ if __name__ == "__main__":
   plt.pcolormesh(1/T, E, np.abs(smat['in', 'out'])**2, zorder=-2, rasterized=True, shading='gouraud', cmap=my_cmap)
   cbar = plt.colorbar(label="Transmissivity")
 
-  poles, residues, thickness, material_poles = load_data(
+  poles, residues, thickness_0pole, _ = load_data(
     0, 1, 1, domain0
   )
-  poles_tracked, residues_tracked = track_qnms(poles, residues)
-  plt.plot(1/thickness, poles_tracked, ".", color="white", alpha=0.6)
-  plt.plot([],[], ".", color="white", alpha=0.6, label="0 pole modes")
+  poles_tracked_0pole, residues_tracked_0pole = track_qnms(poles, residues)
+  plt.plot(1/thickness_0pole, poles_tracked_0pole[:, 0], ".", color="white", markersize=2)
+  plt.plot([],[], ".", color="white", markersize=2, label="0 pole mode")
 
   plt.tick_params(which='both', color="white")
   cbar.ax.tick_params(which='both', color="white")
@@ -200,7 +200,7 @@ if __name__ == "__main__":
     plt.tick_params(which=which, length=length, width=width)
     cbar.ax.tick_params(which=which, length=length, width=width)
 
-  plot_splitting(1,3,1,1,domain, axs=axs,
+  fig, axs, om_os, Cs, param = plot_splitting(1,3,1,1,domain, axs=axs,
     c_fundamental="white",
     c_higher="white",
     c_grid=(0.4, 0.4, 0.4),
@@ -212,8 +212,23 @@ if __name__ == "__main__":
     xlim=(min(inv_d), max(inv_d)),
     ylim=(min(hbar_omega), max(hbar_omega)),
     legend_loc="lower right",
-    plot_dots=False
+    plot_dots=False,
+    return_fit=True,
   )
+
+  ## Corrected estimated 0 pole mode
+  plt.sca(axs[0])
+  poles, residues, thickness, material_poles = load_data(
+    3, 1, 1, domain
+  )
+  iVii = Cs / (-1* material_poles)
+  om_os = np.array(om_os)
+
+  corr = np.sum(iVii, axis=-1)
+  corr_om_os = om_os + corr
+  
+  plt.plot(param, corr_om_os, "-", color="white", label="corrected 'uncoupled' cavity mode", lw=0.6, zorder=7)
+  plt.legend(fontsize=5, labelcolor="white", loc="lower right")
 
   for i, ax in enumerate(axs):
     letter = chr(ord("a")+i)
@@ -228,8 +243,22 @@ if __name__ == "__main__":
 
   # %%
   # %matplotlib inline
-  fig, axs, om_os, cs = plot_splitting(1,3,1,1,domain, return_fit=True, plot_dots=False)
+  fig, axs, om_os, Cs, param = plot_splitting(1,3,1,1,domain, return_fit=True, plot_dots=False)
   plt.savefig("out/Fit_Hamiltonian.pdf")
+
+  # %%
+  poles, residues, thickness, material_poles = load_data(
+    3, 1, 1, domain
+  )
+  iVii = Cs / (-1* material_poles)
+  om_os = np.array(om_os)
+
+  corr = np.sum(iVii, axis=-1)
+  corr_om_os = om_os + corr
+  
+  plt.plot(param, corr_om_os, "-")
+  plt.plot(1/thickness_0pole, poles_tracked_0pole[:,0], ".")
+  plt.plot(param, om_os, "-")
 
   # %%
   plot_splitting(1,1,1,1,domain, plot_dots=False)
@@ -237,29 +266,33 @@ if __name__ == "__main__":
 
   # %%
   ## Experimentation
+  exit()
 
   # %%
-  fig, axs, om_os1, cs1 = plot_splitting(1,1,1,1,domain, color_rabi="C0", return_fit=True)
-  _, _,     om_os2, cs2 = plot_splitting(2,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
-  _, _,     om_os2, cs2 = plot_splitting(3,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
-  _, _,     om_os3, cs3 = plot_splitting(4,1,1,1,domain, color_rabi="C2", return_fit=True, axs=axs, xlim=(0.3, 12))
+  fig, axs, om_os1, Cs1 = plot_splitting(1,1,1,1,domain, color_rabi="C0", return_fit=True)
+  _, _,     om_os2, Cs2 = plot_splitting(2,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
+  _, _,     om_os3, Cs3 = plot_splitting(3,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
+  _, _,     om_os4, Cs4 = plot_splitting(4,1,1,1,domain, color_rabi="C2", return_fit=True, axs=axs, xlim=(0.3, 12))
 
   # %%
+  cs1, cs2, cs3, cs4 = [np.real(np.sqrt(Cs)) for Cs in [Cs1, Cs2, Cs3, Cs4]]
+  
   plt.plot(om_os1, cs1)
   plt.plot(om_os2, cs2)
   plt.plot(om_os3, cs3)
+  plt.plot(om_os4, cs4)
 
 
 # %%
 om_oss = []
 css = []
 axs = None
-for i, mode in enumerate([1,2,4,6]):
-  fig, axs, om_os, cs = plot_splitting(mode,1,1,1,domain, 
+for i, mode in enumerate([1,2,4,5]):
+  fig, axs, om_os, Cs = plot_splitting(mode,1,1,1,domain, 
     color_rabi=f"C{i}", return_fit=True, axs=axs,
     xlim=(0.2,7), inv_d=True)
   om_oss.append(om_os)
-  css.append(cs)
+  css.append(np.real(np.sqrt(Cs)))
 
 # %%
 for om_os, cs in zip(om_oss, css):
