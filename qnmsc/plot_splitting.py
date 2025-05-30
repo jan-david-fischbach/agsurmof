@@ -45,6 +45,9 @@ def plot_splitting(
   plot_dots     = True
   ):
 
+  ls_higher = '--' if c_higher == "white" else '-'
+  lw_optical = 0.4
+
   poles, residues, thickness, material_poles = load_data(
     npoles, scale_osc, scale_damping, domain
   )
@@ -64,9 +67,9 @@ def plot_splitting(
   print(f"QNMs at rabi: {selected[rabi_idx, :]}")
   
   def populate_legend():
+    plt.plot([], [], "-", color=c_fundamental, label="'uncoupled' cavity mode", lw=lw_optical, zorder=7)
     plt.plot([],[], color=c_fundamental, label="fundamental QNMs")
-    plt.plot([],[], color=c_higher, linewidth=lw_higher, label="higher order QNMs")
-    plt.plot([],[], "--", color=c_os, zorder=5, label="'uncoupled' cavity mode")
+    plt.plot([],[], ls_higher, color=c_higher, linewidth=lw_higher, label="higher order QNMs")
     if plot_dots:
       plt.plot([],[], color=c_fit, linestyle="none", marker=".", label="coupling fit")
 
@@ -111,7 +114,17 @@ def plot_splitting(
 
   if plot_dots:
     plt.plot(param_interp, np.array(evs_fit).real, color=c_fit, linestyle="none", marker=".")
-  plt.plot(param_interp, np.array(om_os).real, "--", color=c_os, zorder=5)
+
+
+  Cs = np.array(Cs)
+  iVii = Cs / (-1* material_poles)
+  om_os = np.array(om_os)
+
+  corr = np.sum(iVii, axis=-1)
+  corr_om_os = om_os + corr
+  
+  plt.plot(param_interp, corr_om_os, "-", color=c_fundamental, lw=lw_optical, zorder=7)
+
   plt.vlines(
     [rabi_param],*f_mode[rabi_idx, [0, -1]], color=color_rabi, 
     label=f"$\Omega_\mathrm{{Rabi}}=2\cdot{f_rabi.real/2:.3f}[\mathrm{{eV}}]$",
@@ -124,7 +137,7 @@ def plot_splitting(
       plt.axhline(mat_pole.real, color=c_mat[i],)#, linestyle="--")
 
   for pole in poles_tracked.T: # higher order modes
-    plt.plot(param, pole.real, color=c_higher, linewidth=lw_higher, zorder=-1)
+    plt.plot(param, pole.real, ls_higher, color=c_higher, linewidth=lw_higher, zorder=-1)
 
   plt.axvline(rabi_param, color=c_grid, zorder=-1)
   plt.ylim(ylim)
@@ -132,7 +145,6 @@ def plot_splitting(
   plt.axvline(rabi_param, color=c_grid, zorder=-1)
 
   plt.ylabel("Coupling $\sqrt{\hat g_i g_i}$ [eV]")
-  Cs = np.array(Cs)
   cs = np.sqrt(np.real(Cs))
   for i,coupling in enumerate(cs.T):
       plt.plot(param_interp, coupling, ".-" if plot_dots else "-", color=c_mat[i], label=f"$p_{i+1}=\complexqty{{{material_poles[i]:.3f}}}{{eV}}$")
@@ -147,7 +159,7 @@ def plot_splitting(
   plt.plot(x, [f_rabi.real/2]*2, color="r")
   #plt.ylim(0, 1.1*max(f_rabi.real/2, np.nanmax(cs.flatten())))
 
-  plt.legend(fontsize=6, title="Material Resonances", loc="lower right", frameon=True)
+  plt.legend(fontsize=5, title="Material Resonances", loc="lower right", frameon=True)
   if inv_d:
       fig.supxlabel(r"Inverse Cavity Thickness $\frac{1}{d}$ ["+inv_um+"]")
       plt.xlim(xlim)
@@ -217,18 +229,6 @@ if __name__ == "__main__":
   )
 
   ## Corrected estimated 0 pole mode
-  plt.sca(axs[0])
-  poles, residues, thickness, material_poles = load_data(
-    3, 1, 1, domain
-  )
-  iVii = Cs / (-1* material_poles)
-  om_os = np.array(om_os)
-
-  corr = np.sum(iVii, axis=-1)
-  corr_om_os = om_os + corr
-  
-  plt.plot(param, corr_om_os, "-", color="white", label="corrected 'uncoupled' cavity mode", lw=0.6, zorder=7)
-  plt.legend(fontsize=5, labelcolor="white", loc="lower right")
 
   for i, ax in enumerate(axs):
     letter = chr(ord("a")+i)
