@@ -31,7 +31,7 @@ if __name__ == "__main__":
 def plot_splitting(
   modenumber, npoles, scale_osc, scale_damping, domain, 
   inv_d=True, ylim=(1.2, 2.5), xlim=(1,12), color_rabi="r",
-  axs=None, return_fit=False, n_interp=300,
+  axs=None, return_fit=False, return_rabi=False, n_interp=300,
   c_os          = (0.8, 0.8, 0.8),
   c_grid        = (0.8, 0.8, 0.8),
   c_fundamental = "gray",
@@ -125,11 +125,12 @@ def plot_splitting(
   
   plt.plot(param_interp, corr_om_os, "-", color=c_fundamental, lw=lw_optical, zorder=7)
 
-  plt.vlines(
-    [rabi_param],*f_mode[rabi_idx, [0, -1]], color=color_rabi, 
-    label=f"$\Omega_\mathrm{{Rabi}}=2\cdot{f_rabi.real/2:.3f}[\mathrm{{eV}}]$",
-    zorder=6
-  )
+  if color_rabi != 'none':
+    plt.vlines(
+      [rabi_param],*f_mode[rabi_idx, [0, -1]], color=color_rabi, 
+      label=f"$\Omega_\mathrm{{Rabi}}=2\cdot{f_rabi.real/2:.3f}[\mathrm{{eV}}]$",
+      zorder=6
+    )
   plt.ylabel("$\hbar \omega$ [eV]")
   plt.legend(fontsize=5, labelcolor=c_font, loc=legend_loc)
 
@@ -154,9 +155,10 @@ def plot_splitting(
 
   plt.plot(param_interp, gamma_avg, color="k", label=f"$\gamma_\mathrm{{avg}} = {gamma_avg_res:.3f}$ eV @ $\delta = 0$")
   
-  stud = 0.1
+  stud = 0.1 if inv_d else 0.02
   x = [rabi_param-stud,rabi_param+stud]
-  plt.plot(x, [f_rabi.real/2]*2, color="r")
+  if color_rabi != 'none':
+    plt.plot(x, [f_rabi.real/2]*2, color=color_rabi)
   #plt.ylim(0, 1.1*max(f_rabi.real/2, np.nanmax(cs.flatten())))
 
   plt.legend(fontsize=5, title="Material Resonances", loc="lower right", frameon=True)
@@ -166,6 +168,8 @@ def plot_splitting(
   else:
       fig.supxlabel("Cavity Thickness [um]")
 
+  if return_rabi:
+    return fig, axs, om_os, Cs, param_interp, rabi_param, f_rabi
   if return_fit:
     return fig, axs, om_os, Cs, param_interp
   return fig, axs
@@ -228,8 +232,6 @@ if __name__ == "__main__":
     return_fit=True,
   )
 
-  ## Corrected estimated 0 pole mode
-
   for i, ax in enumerate(axs):
     letter = chr(ord("a")+i)
     ax.annotate(
@@ -261,12 +263,9 @@ if __name__ == "__main__":
   plt.plot(param, om_os, "-")
 
   # %%
+  # %matplotlib widget
   plot_splitting(1,1,1,1,domain, plot_dots=False)
   plt.savefig("out/Single_pole_splitting.pdf")
-
-  # %%
-  ## Experimentation
-  exit()
 
   # %%
   fig, axs, om_os1, Cs1 = plot_splitting(1,1,1,1,domain, color_rabi="C0", return_fit=True)
@@ -283,19 +282,17 @@ if __name__ == "__main__":
   plt.plot(om_os4, cs4)
 
 
-# %%
-om_oss = []
-css = []
-axs = None
-for i, mode in enumerate([1,2,4,5]):
-  fig, axs, om_os, Cs = plot_splitting(mode,1,1,1,domain, 
-    color_rabi=f"C{i}", return_fit=True, axs=axs,
-    xlim=(0.2,7), inv_d=True)
+  # %%
+  om_oss = []
+  css = []
+  axs = None
+  for i, mode in enumerate([1,2,4,5]):
+    fig, axs, om_os, Cs = plot_splitting(mode,1,1,1,domain, 
+      color_rabi=f"C{i}", return_fit=True, axs=axs,
+      xlim=(0.2,7), inv_d=True)
   om_oss.append(om_os)
   css.append(np.real(np.sqrt(Cs)))
 
-# %%
-for om_os, cs in zip(om_oss, css):
-  plt.plot(om_os, cs)
-
-# %%
+  # %%
+  for om_os, cs in zip(om_oss, css):
+    plt.plot(om_os, cs)

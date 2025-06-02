@@ -327,7 +327,7 @@ if __name__ == "__main__":
     plt.savefig("out/ThreePole.pdf", dpi=1200)
 
     # %%
-    oscs = [1, 0.25, 0.1, 0.025, 0.01][0:-1]
+    oscs = [1, 0.1, 0.05, 0.025]
     plot_domain2 = [1.6-0.14j, 1.85+0.01j]
     plot_domain1 = [1.5-0.14j, 2+0.01j]
 

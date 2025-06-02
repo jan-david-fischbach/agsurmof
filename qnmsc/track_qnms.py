@@ -176,7 +176,7 @@ if __name__ == "__main__":
       checkpointing=True
     )
 
-  for osc in [1, 0.25, 0.1, 0.025, 0.01]:
+  for osc in [1, 0.25, 0.1, 0.07, 0.05, 0.025, 0.01]:
     all_poles, all_residues = find_qnms(
       ts, npoles=1, osc_strength=osc, damping=1, domain=domain, 
       checkpointing=True
@@ -197,10 +197,27 @@ if __name__ == "__main__":
     checkpointing=True
   )
 
-# %%
-  ts = 0.0025*(np.arange(1, 240)+1)
-  domain = [1-0.5j, 2.5+0.05j]
+
+  ts = 0.005*(np.arange(1, 240)+1)
   all_poles, all_residues = find_qnms(
-    ts, npoles=1, osc_strength=0.025, damping=1, domain=domain, 
+    ts, npoles=3, osc_strength=0.1, damping=1, domain=domain, 
     checkpointing=True
   )
+
+  all_poles, all_residues = find_qnms(
+    ts, npoles=1, osc_strength=0.1, damping=1, domain=domain, 
+    checkpointing=True
+  )
+
+# %%
+  ts = 0.0025*(np.arange(1, 240)+1)
+  ts = np.concatenate([ts, 0.2+0.00025*(np.arange(-40, 41))])
+  ts = np.sort(ts)
+  ts = np.unique(ts)
+  
+  domain = [1-0.5j, 2.5+0.05j]
+  for osc in [0.05, 0.025]:
+    all_poles, all_residues = find_qnms(
+      ts, npoles=1, osc_strength=osc, damping=1, domain=domain, 
+      checkpointing=True
+    )
