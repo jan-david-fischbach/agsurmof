@@ -118,7 +118,6 @@ axs = axss[-1]
 thicknesses = np.linspace(0.0, 0.41, 401)
 lw_qnm=0.2
 for i, scale_osc in enumerate([0.025, 0.05, 0.1, 1]):
-
   
   plt.sca(axs[i])
   HO, T = np.meshgrid(hbar_omega, thicknesses)
@@ -142,6 +141,14 @@ for i, scale_osc in enumerate([0.025, 0.05, 0.1, 1]):
 
   plt.tick_params(which='both', color="white")
 
+axs=axss[0]
+for i, factor in enumerate(factors):
+  if factor == 1:
+    continue
+
+  axs[i].plot([1.9, 2], [0.39, 0.39],   alpha=0.4, color='C0')
+  axs[i].plot([1.9, 2], [0.41, 0.41], alpha=0.4, color='C1')
+  axs[i].text(2.05, 0.4, f"x{factor:.2f}", va="center")
 
 for i, axs in enumerate(axss.T[:-1]):
   for j, ax in enumerate(axs):
