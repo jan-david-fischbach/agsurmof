@@ -51,7 +51,7 @@ for i, scale_osc in enumerate(s_oscs):
 
 # %%
 fig, axss = plt.subplots(2, 4, figsize=(180*mm, 80*mm), sharey="row", sharex=True, constrained_layout=True)
-c_ = unit_conversion['THz']
+c_ = unit_conversion['eV']
 
 axs = axss[0]
 for i, scale_osc in enumerate(s_oscs):
@@ -73,9 +73,10 @@ for i, scale_osc in enumerate(s_oscs):
   Refl = np.abs(smat['in', 'in'])**2
   Abs = 1 - Tran - Refl
 
-  plt.plot(c_(hbar_omega), Tran, lw=0.25, color="k", label="transmission")
-  plt.plot(c_(hbar_omega), Refl, "--k", lw=0.4, label="reflection")
-  plt.plot(c_(hbar_omega), Abs, "k", label="absorption")
+  label_thresh = 3
+  plt.plot(c_(hbar_omega), Tran, lw=0.25, color="k", label="transmission" if i>=label_thresh else None)
+  plt.plot(c_(hbar_omega), Refl, "--k", lw=0.4,        label="reflection" if i>=label_thresh else None)
+  plt.plot(c_(hbar_omega), Abs, "k",                   label="absorption" if i>=label_thresh else None)
   plt.xlim(min(c_(hbar_omega)), max(c_(hbar_omega)))
 
   fit = diffaaable.aaa(hbar_omega, t)
@@ -97,18 +98,19 @@ for i, scale_osc in enumerate(s_oscs):
     #plt.plot(hbar_omega, np.real(contrib), linestyle='--', color=f'C{j}')
     #plt.plot(hbar_omega, np.abs(contrib), color='gray')
 
-    plt.plot(c_(hbar_omega), np.abs(contrib)**2, color=f'C{j}', alpha=0.4, label=f"mode {j+1}")
+    plt.plot(c_(hbar_omega), np.abs(contrib)**2, color=f'C{j}', alpha=0.4, label=f"mode {j+1}" if i<label_thresh else None)
   #plt.plot(hbar_omega, np.real(np.sum(contributions, axis=-1)), color=f'C{i}')
 
-  print(f"poles: {poles}; residues: {residues}")
+  # print(f"poles: {poles}; residues: {residues}")
   # for pole in poles:
   #   plt.axvline(pole, color = f'C{i}')
 
-  plt.text(390, 1, f"$\\frac{{\Omega_{{\mathrm{{Rabi}}}}}}{{2}} \\approx {f_rabis[i]/2:.3f} \;$ eV\n$|g| \\approx {gs[i]:.3f} \;$ eV\n$\gamma_\mathrm{{avg}} \\approx {avg_loss} \;$ eV", size=4, ha="right")
+  #plt.text(390, 1, f"$\\frac{{\Omega_{{\mathrm{{Rabi}}}}}}{{2}} \\approx {f_rabis[i]/2:.3f} \;$ eV\n$|g| \\approx {gs[i]:.3f} \;$ eV\n$\gamma_\mathrm{{avg}} \\approx {avg_loss} \;$ eV", size=4, ha="right")
 
 axs[0].set_title(f"Oscillator Strength Scaling:\n{s_oscs[0]:.3f}")
 axs[0].set_ylabel("Observable")
 axs[-1].legend(loc='upper right', fontsize=5)
+axs[-2].legend(loc='upper right', fontsize=5)
 plt.ylim((0, None))
 
 axs = axss[1]
@@ -140,15 +142,25 @@ for i, scale_osc in enumerate([0.025, 0.05, 0.1, 1]):
   plt.tick_params(which='both', color="white")
 
 
+for i, axs in enumerate(axss.T):
+  for j, ax in enumerate(axs):
+    letter = chr(ord("a")+j)
+    ax.annotate(
+          f" ({letter}{i+1})",
+          xy=(0, 1), xycoords='axes fraction',
+          xytext=(+0.5, -0.5), textcoords='offset fontsize',
+          fontsize='medium', verticalalignment='top', fontfamily='serif',
+          bbox=dict(facecolor=(1,1,1,0.8), edgecolor='none', pad=2.0))
+
 plt.plot([],[], color='white', lw=lw_qnm, label="QNMs")
 plt.ylim(min(thicknesses), max(thicknesses))
-axs[0].set_ylabel("$d$ [um]")
+axs[0].set_ylabel(f"$d$ [{um}]")
 axs[-1].legend(labelcolor='white')
 
 cbar = plt.colorbar(cm, ax=axs, label="$T = |t|^2$")
 cbar.ax.tick_params(which='both', color="white")
 
-fig.supxlabel(r"$\Re\{ f \}$ [THz]")
+fig.supxlabel(r"$\Re\{ \hbar \omega \}$ [eV]")
 plt.savefig("out/OscReductionObservable.pdf", bbox_inches='tight')
 
 # %%
