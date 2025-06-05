@@ -35,6 +35,7 @@ from qnmsc.track_qnms import filename, track_qnms
 import diffaaable
 import matplotlib.colors as mcolors
 import colorsys
+from matplotlib.patches import ConnectionPatch
 
 # %%
 def calc_material_poles(scale_osc, scale_damping):
@@ -178,7 +179,7 @@ def plot_thickness(npoles, scale_osc, scale_damping, domain,
 def plot_trajectories(npoles, scale_osc, scale_damping, domain, 
   plot_domain = [1-0.06j, 2.5+0.01j], fig_width = 90*mm, fig_height = 80*mm,
   unit = "eV", axs=None, cbar=True, labels=True, plot_neg_eps_r=False, d_limit=np.inf, 
-  color_thickness=False, num_modes = 4, upsample=10, label_suffix=""
+  color_thickness=False, num_modes = 4, upsample=10, label_suffix="", thickness_color_norm=None
   ):
 
   c_ = unit_conversion[unit]
@@ -241,8 +242,9 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
   # Interpolate thicknesses to make plot smoother
   interp_d = np.linspace(min(thickness), min(max(thickness), d_limit), (len(thickness)-1)*upsample+1) [::-1]
   cmap = mpl.cm.viridis_r
-  norm = mpl.colors.Normalize(vmin=min(interp_d), vmax=max(interp_d))
-  colors_interp = cmap(norm(interp_d))
+  if thickness_color_norm is None:
+    thickness_color_norm = mpl.colors.Normalize(vmin=min(interp_d), vmax=max(interp_d))
+  colors_interp = cmap(thickness_color_norm(interp_d))
 
   for i, (pole, res) in enumerate(zip(poles_tracked.T, residues_tracked.T)):
     real = np.interp(interp_d, thickness, pole.real)
@@ -308,81 +310,98 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
     plt.ylabel(f"$d$ [{um}]")
     plt.xlabel(f"$\Re\{{{q_}\}}$ [{u_}]")
 
-  return pcm, cmap, norm
+  return pcm, cmap, thickness_color_norm
 
 # %%
 if __name__ == "__main__":
+    unit = "eV"
     plt.figure()
-    plot_trajectories(0, 1, 1, domain, unit="THz", fig_width=90*mm, fig_height=50*mm)
-    plt.savefig("out/NoPole.pdf", dpi=1200)
-
-    plt.figure()
-    plot_trajectories(1, 1, 1, domain, unit="THz", fig_width=90*mm, fig_height=50*mm)
+    plot_trajectories(1, 1, 1, domain, unit=unit, fig_width=90*mm, fig_height=50*mm)
     plt.savefig("out/SinglePole.pdf", dpi=1200)
 
     # %%
     plt.figure()
-    plot_trajectories(3, 1, 1, domain, unit="THz", plot_neg_eps_r=True, fig_width=90*mm, fig_height=50*mm, cbar=False)
-    plt.xlim(350, 500)
+    plot_trajectories(3, 1, 1, domain, unit=unit, plot_neg_eps_r=True, fig_width=90*mm, fig_height=50*mm, cbar=False)
+    plt.xlim(1.5, 2.1)
     plt.savefig("out/ThreePole.pdf", dpi=1200)
 
     # %%
+    # %matplotlib widget
+
     oscs = [1, 0.1, 0.05, 0.025]
-    plot_domain2 = [1.6-0.14j, 1.85+0.01j]
-    plot_domain1 = [1.5-0.14j, 2+0.01j]
+    plot_domain2 = [1.6-0.14j, 1.85+0.05j]
+    plot_domain1 = [1.5-0.14j, 2+0.05j]
+
+    thickness_color_ranges = [[0.19, 0.23], [0,0.4]]
+    thresh = 1
+    
 
     fig, axss = plt.subplots(
         2, len(oscs)+2, sharex="col",
-        figsize=(180*mm,50*mm), constrained_layout=True, width_ratios=[1]*len(oscs)+[0.03]*2
+        figsize=(180*mm,60*mm), constrained_layout=True, width_ratios=[1,1,1,0.06,1,0.06] #([1]*2 + [0.06])*2
         )
 
     suffix = 1
-    for osc, axs in zip(oscs[::-1], axss.T):
+
+    norms = []
+    for osc, axs in zip(oscs[::-1], axss.T[np.array([0,1,2,4])]):
+
+      vmin, vmax = thickness_color_ranges[osc >= thresh]
       pcm, cmap, norm = plot_trajectories(
           1, osc, 1, domain, 
           plot_domain=plot_domain1 if osc==1 else plot_domain2, 
-          unit="THz", axs=axs, cbar=False, labels=False, d_limit=0.4, 
-          upsample=10, label_suffix = suffix
+          unit=unit, axs=axs, cbar=False, labels=False, d_limit=0.4, 
+          upsample=10, label_suffix = suffix,
+          thickness_color_norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
       )
       suffix += 1
       axs[0].set_title(f"{osc:.3f}")
+      norms.append(norm)
 
 
-    cb = plt.colorbar( pcm,
+    cb = plt.colorbar(pcm,
       label="$\Re\{\\varepsilon_\mathrm{r}\}$", 
       ticks=[-1e3, -1, 0, 1, 1e3], cax=axss[0, -1]
     )
     cb.set_ticklabels(["-$10^3$", -1, 0, 1, "$10^3$"])
-    mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
-    fig.colorbar(mappable, cax=axss[0, -2], label=f"$d$ [{um}]")
+
+    mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norms[1])
+    cb = fig.colorbar(mappable, cax=axss[1, 3])
+    cb.ax.zorder = -1
+
+    mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norms[3])
+    cb = fig.colorbar(mappable, cax=axss[1, -1], label=f"$d$ [{um}]")
+    cb.ax.zorder = -1
 
     axss[0,0].set_title(f"Oscillator Strength Scaling:\n{oscs[-1]}")
-    fig.supxlabel("$\Re\{f\}$ [THz]")
-    axss[0,0].set_ylabel("$\Im\{f\}$ [THz]")
+    fig.supxlabel(f"$\Re\{{f\}}$ [{unit}]")
+    axss[0,0].set_ylabel(f"$\Im\{{f\}}$ [{unit}]")
     axss[1,0].set_ylabel(f"$d$ [{um}]")
 
-    for axs in axss.T[1:-2]:
+    for axs in axss.T[1:-1]:
       axs[0].sharey(axss[0,0])
-      axs[0].tick_params(axis='y',labelleft=False)
+      axs[0].tick_params(axis='y',labelleft=False, labelright=False)
       axs[1].sharey(axss[1,0])
-      axs[1].tick_params(axis='y',labelleft=False)
+      axs[1].tick_params(axis='y',labelleft=False, labelright=False)
 
-    axss[1, -1].axis("off")
-    axss[1, -2].axis("off")
+    axss[0, 3].axis("off")
+
+
+    zorder_indicators = 0
+    axesB = [
+      [axss[0, 2], axss[0, 0]],
+      [axss[0, 4], axss[0, 4]]
+    ]
+    for i_cbar in range(2):
+      for corner in range(2):
+        con = ConnectionPatch(
+          (1, thickness_color_ranges[i_cbar][1-corner]),
+          (1-corner, 1-corner),
+          coordsA='data', coordsB='axes fraction', axesA=axss[1, -1 if i_cbar else 3], axesB=axesB[i_cbar][corner],
+          zorder=zorder_indicators)
+        fig.add_artist(con)
+
     print("Start Rendering")
     plt.savefig("out/OscReduction.pdf", dpi=1200)
 
-    # %%
-    # plot_thickness(3, 1, 1, domain)
-    # plot_thickness(3, 1, 1, domain, inv=False)
-
-    # %%
-    # e_r = np.linspace(1, 2.5, 1200)
-    # eps_r = eps_surmof(e_r, 1, 1, 1)
-    # plt.plot(e_r, eps_r)
-
 # %%
-
-
-
-

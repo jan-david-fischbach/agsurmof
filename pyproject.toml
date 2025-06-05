@@ -9,6 +9,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "cairosvg>=2.8.2",
     "diffaaable",
     "ipykernel>=6.29.5",
     "ipympl>=0.9.6",

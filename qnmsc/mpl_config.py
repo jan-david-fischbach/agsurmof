@@ -8,7 +8,7 @@ def config():
     plt.style.use('nature')
 
     params = {
-        'text.latex.preamble': r'\usepackage{siunitx} \usepackage{amsmath} \usepackage{amssymb} \usepackage{sfmath}',
+        'text.latex.preamble': r'\usepackage{siunitx} \usepackage{amsmath} \usepackage{amssymb} \usepackage{sfmath} \sisetup{detect-all}',
         'axes.prop_cycle': colorcycle,
         'axes.titlesize': 7
     }
@@ -19,8 +19,11 @@ def config():
 um = r"\unit{\micro \meter}"
 inv_um = r"\unit{\per \micro \meter}"
 
-um = r"$\mu m$"
-inv_um = r"$\mu m ^ {-1}$"
+# um = r"$\mu m$"
+# inv_um = r"$\mu m ^ {-1}$"
+
+# um = r"$\upmu$ m"
+
 mm = 0.1/2.54
 
 if __name__ == "__main__":
