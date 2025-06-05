@@ -154,10 +154,10 @@ for i, axs in enumerate(axss.T):
 
 plt.plot([],[], color='white', lw=lw_qnm, label="QNMs")
 plt.ylim(min(thicknesses), max(thicknesses))
-axs[0].set_ylabel(f"$d$ [{um}]")
+axss[1,0].set_ylabel(f"$d$ [{um}]")
 axs[-1].legend(labelcolor='white')
 
-cbar = plt.colorbar(cm, ax=axs, label="$T = |t|^2$")
+cbar = plt.colorbar(cm, ax=axss[1], label="$T = |t|^2$")
 cbar.ax.tick_params(which='both', color="white")
 
 fig.supxlabel(r"$\Re\{ \hbar \omega \}$ [eV]")
