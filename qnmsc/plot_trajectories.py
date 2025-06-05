@@ -374,8 +374,8 @@ if __name__ == "__main__":
     cb.ax.zorder = -1
 
     axss[0,0].set_title(f"Oscillator Strength Scaling:\n{oscs[-1]}")
-    fig.supxlabel(f"$\Re\{{f\}}$ [{unit}]")
-    axss[0,0].set_ylabel(f"$\Im\{{f\}}$ [{unit}]")
+    fig.supxlabel(f"$\Re\{{{qty_str[unit]}\}}$ [{unit}]")
+    axss[0,0].set_ylabel(f"$\Im\{{{qty_str[unit]}\}}$ [{unit}]")
     axss[1,0].set_ylabel(f"$d$ [{um}]")
 
     for axs in axss.T[1:-1]:
@@ -389,14 +389,14 @@ if __name__ == "__main__":
 
     zorder_indicators = 0
     axesB = [
-      [axss[0, 2], axss[0, 0]],
-      [axss[0, 4], axss[0, 4]]
+      [axss[0, 0], axss[0, 2]],
+      [axss[0, 4], axss[0, 4]],
     ]
     for i_cbar in range(2):
       for corner in range(2):
         con = ConnectionPatch(
-          (1, thickness_color_ranges[i_cbar][1-corner]),
-          (1-corner, 1-corner),
+          (corner, thickness_color_ranges[i_cbar][corner]),
+          (corner, corner),
           coordsA='data', coordsB='axes fraction', axesA=axss[1, -1 if i_cbar else 3], axesB=axesB[i_cbar][corner],
           zorder=zorder_indicators)
         fig.add_artist(con)
