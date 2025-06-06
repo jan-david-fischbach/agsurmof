@@ -34,12 +34,13 @@ def filename(npoles, osc_strength, damping, domain):
   file = folder/f"fine_{npoles}pole_{osc_strength}osc_{damping}damping.pkl"
   return file
 
-def find_qnms(rs, npoles=3, osc_strength=1, damping=1, 
+def find_qnms(rs, betas, npoles=3, osc_strength=1, damping=1, 
               domain=[1-0.5j, 2.5+0.05j], checkpointing=True, plotting=True):
   """Find the poles of the S-matrix of a surmof cavity 
 
   Args:
-    ts (iterable): Cavity Thicknesses to scan over
+    rs (iterable): Cylinder Radius to scan over
+    betas (iterable): Beta values to scan over (has to have the same size as `rs`)
     npoles (int, optional): 
         Number of Poles of the SURMOF material to consider. Defaults to 3.
     osc_strength (int, optional): 
@@ -50,11 +51,14 @@ def find_qnms(rs, npoles=3, osc_strength=1, damping=1,
         Whether to write results to a cache file (and avoid recomputing 
         results already present in the future). Defaults to True.
   """
-  fname = filename(npoles, osc_strength, damping, domain)
+  if len(rs) != len(betas):
+    raise ValueError("The number of radii and betas has to be the same.")
 
+  fname = filename(npoles, osc_strength, damping, domain)
+  ps = list(zip(rs, betas))
   all_poles = []
   all_residues = []
-  rs_new = rs
+  ps_new = ps
   if checkpointing:
     try:
       with open(fname, 'rb') as file:
@@ -62,35 +66,40 @@ def find_qnms(rs, npoles=3, osc_strength=1, damping=1,
       all_poles    = cache['poles']
       all_residues = cache['residues']
 
-      rs_new = [t for t in rs if t not in cache['radius']] # TODO
-      rs = np.concat([np.array(cache['radius']), np.array(rs_new)])
+      ps_new = [p for p in ps if p not in cache['param']]
+      if len(ps_new) == 0:
+        ps = np.array(cache['param'])
+      else:
+        ps = np.concat([np.array(cache['param']), np.array(ps_new)])
     except FileNotFoundError:
       pass
 
-  for radius in tqdm(rs_new):
+  for parameter in tqdm(ps_new):
+    radius, beta = parameter
     f = partial(det_tmat, 
-      radius=radius, npoles=npoles, 
+      radius=radius, beta=beta, npoles=npoles, 
       scale_osc=osc_strength, scale_damping=damping
     )
 
     poles, residues, evals = selective_refinement_aaa(
       f, domain=domain, 
-      N=100, use_adaptive=False, tol_pol=1e-7, Dmax=12)
+      N=100, use_adaptive=False, tol_pol=1e-7, Dmax=22)
                     
     all_poles.append(poles)
     all_residues.append(residues)
 
     if checkpointing:
-      rs_tmp = rs[:len(all_poles)]
-      sorter = np.argsort(rs_tmp)
+      ps_tmp = ps[:len(all_poles)]
+      sort_by = [np.sum(p) for p in ps_tmp]
+      sorter = np.argsort(sort_by)
       poles_tmp    = [all_poles[i] for i in sorter]
       residues_tmp = [all_residues[i] for i in sorter]
-      rs_tmp       = [rs_tmp[i] for i in sorter]
+      ps_tmp       = [ps_tmp[i] for i in sorter]
       with open(fname, "wb") as file:
         pickle.dump({
           "poles":    poles_tmp, 
           "residues": residues_tmp, 
-          "radius":rs_tmp
+          "param": ps_tmp
         }, file)
 
   if plotting:
@@ -169,9 +178,22 @@ def eyes(ts, all_poles, all_residues):
 # %%
 if __name__ == "__main__":
   rs = 0.003*(np.arange(1, 30)+1)
+  betas = 0.7*np.ones_like(rs)
+
   domain = [1-0.5j, 2.5+0.05j]
 
   all_poles, all_residues = find_qnms(
-    rs, npoles=3, osc_strength=1, damping=1, domain=domain, 
+    rs, betas, npoles=3, osc_strength=1, damping=1, domain=domain, 
+    checkpointing=True
+  )
+
+
+  betas = 0.6 + 0.01*np.arange(0, 21)
+  rs = 0.03*np.ones_like(betas)
+
+  domain = [1-0.5j, 2.5+0.05j]
+
+  all_poles, all_residues = find_qnms(
+    rs, betas, npoles=3, osc_strength=1, damping=1, domain=domain, 
     checkpointing=True
   )
