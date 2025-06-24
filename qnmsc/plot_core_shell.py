@@ -95,5 +95,28 @@ plt.ylim(7, 11)
 plt.tick_params(which='both', color="white")
 
 # %%
+cmap = plt.cm.viridis
+for osc_strength in [0.1, 0.25, 0.5, 1]:
+  for pol in [1]:
+    for l in [1,2]:
+      for mode in range(1, 10):
+        o = str(osc_strength).replace('.', 'p')
+        if osc_strength == 1:
+          o = ''
+        suffix = f"onepole{o}_fixedthickness20nm"
+
+        color = cmap(osc_strength-1e-3)
+        plot_trajectory(pol, l, mode, suffix=suffix, color=color)
+    
+  plt.plot([], [], color=color, label=f"{osc_strength:.2f}")
+
+
+plt.xlabel(rf'$1/r_\mathrm{{outer}}$ [{inv_um}]')
+plt.ylabel(rf'$k_0$ [$2\pi$ {inv_um}]')
+
+plt.xlim(2.7, 14)
+plt.ylim(7.5, 10)
+
+plt.legend(title="Oscillator Strength")
 
 # %%
