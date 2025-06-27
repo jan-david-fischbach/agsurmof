@@ -111,7 +111,7 @@ for i, scale_osc in enumerate(s_oscs):
 
 axs[0].set_title(f"Oscillator Strength Scaling:\n{s_oscs[0]:.3f}")
 axs[0].set_ylabel("$T = |t|^2$")
-axs[3].legend(loc='upper right', fontsize=5)
+#axs[3].legend(loc='upper right', fontsize=5)
 plt.ylim((0, None))
 
 axs = axss[-1]
@@ -141,14 +141,20 @@ for i, scale_osc in enumerate([0.025, 0.05, 0.1, 1]):
 
   plt.tick_params(which='both', color="white")
 
-axs=axss[0]
-for i, factor in enumerate(factors):
-  if factor == 1:
-    continue
 
-  axs[i].plot([1.9, 2], [0.39, 0.39],   alpha=0.4, color='C0')
-  axs[i].plot([1.9, 2], [0.41, 0.41], alpha=0.4, color='C1')
-  axs[i].text(2.05, 0.4, f"x{factor:.2f}", va="center")
+# axs=axss[0]
+# for i, factor in enumerate(factors):
+#   if factor == 1:
+#     continue
+
+axss[0, -2].set_ylabel("Modal Contrib. [a.u.]")
+axss[0, -2].yaxis.set_label_position("right")
+
+#plt.plot(range(5), range(5), 'ro', markersize=20, clip_on=False, zorder=100)
+
+#   axs[i].plot([1.9, 2], [0.39, 0.39],   alpha=0.4, color='C0')
+#   axs[i].plot([1.9, 2], [0.41, 0.41], alpha=0.4, color='C1')
+#   axs[i].text(2.05, 0.4, f"x{factor:.2f}", va="center")
 
 for i, axs in enumerate(axss.T[:-1]):
   for j, ax in enumerate(axs):
@@ -164,13 +170,17 @@ for i, axs in enumerate(axss.T[:-1]):
 plt.ylim(min(thicknesses), max(thicknesses))
 axss[1,0].set_ylabel(f"$1-T-R$")
 axss[-1,0].set_ylabel(f"$d$ [{um}]")
-axs[-1].legend(labelcolor='white')
+#axs[-1].legend(labelcolor='white')
 
 axss[0, -1].axis('off')
 axss[1, -1].axis('off')
 
 cbar = plt.colorbar(cm, cax=axss[-1][-1], label="$T = |t|^2$")
-cbar.ax.tick_params(which='both', color="white")
+ax = cbar.ax
+ax.tick_params(which='both', color="white")
+
+pos = ax.get_position()
+ax.set_position([pos.x0+0.7, pos.y0, pos.width, pos.height])
 
 fig.supxlabel(r"$\Re\{ \hbar \omega \}$ [eV]")
 plt.savefig("out/OscReductionObservable.pdf", bbox_inches='tight', dpi=1600)

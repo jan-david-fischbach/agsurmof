@@ -233,13 +233,14 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
   plt.xlim(min(c_(e_r)), max(c_(e_r)))
 
   ## Material Poles and Zeros
+  mew =0.5
   plt.scatter(
     poles.real, poles.imag, 
-    marker="x", color="k"
+    marker="x", color="k", linewidths=mew
   )
   plt.scatter(
     zeros.real, zeros.imag, 
-    facecolors='none', edgecolors="k", linewidths=1
+    facecolors='none', edgecolors="k", linewidths=mew
   )
 
   # Interpolate thicknesses to make plot smoother
@@ -253,6 +254,7 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
     real = np.interp(interp_d, thickness, pole.real)
     imag = np.interp(interp_d, thickness, pole.imag)
     s = np.interp(interp_d, thickness, np.abs(res))/(-imag)
+    s = np.sqrt(s)
     plt.scatter(c_(real), c_(imag), c=colors_interp, edgecolor='none', s=s, rasterized=True)
 
   if labels:
@@ -277,23 +279,25 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
       real = np.interp(interp_d, thickness, pole.real)
       imag = np.interp(interp_d, thickness, pole.imag)
       s = np.interp(interp_d, thickness, np.abs(res))/(-imag)
+      s = np.sqrt(s)
 
       c0_rgba = mcolors.to_rgba(f"C{i-1}")
       c0_hsv = colorsys.rgb_to_hsv(*c0_rgba[:3])
-      new_saturation = c0_hsv[1] * ((npoles+1)-j)/(npoles+1)
+      new_saturation = c0_hsv[1] * ((((npoles)-j)/(npoles) - 1)*0.8 + 1)
       new_rgb = colorsys.hsv_to_rgb(c0_hsv[0], new_saturation, c0_hsv[2])
       new_rgba = (*new_rgb, c0_rgba[3])
 
-      c = colors_interp if color_thickness else new_rgba
+      if color_thickness:
+        plt.scatter(c_(real), interp_d, c=colors_interp, edgecolor='none', s=s, rasterized=True)
+      else:
+        plt.scatter(c_(real), interp_d, color=new_rgba, edgecolor='none', s=s, rasterized=True)
 
-      plt.scatter(c_(real), interp_d, c=c, edgecolor='none', s=s, rasterized=True)
-  
   all_modes = np.array(list(all_modes), dtype=int)
   for pole, res in zip(poles_tracked.T[all_modes], residues_tracked.T[all_modes]):
       real = np.interp(interp_d, thickness, pole.real)
       imag = np.interp(interp_d, thickness, pole.imag)
       s = np.interp(interp_d, thickness, np.abs(res))/(-imag)
-      plt.scatter(c_(real), interp_d, c=[0.8,0.8,0.8], edgecolor='none', s=s, rasterized=True)
+      plt.scatter(c_(real), interp_d, color=[0.8,0.8,0.8], edgecolor='none', s=s, rasterized=True)
 
   plt.ylim(0, max(interp_d))
   plt.xlim(min(c_(e_r)), max(c_(e_r)))
@@ -324,15 +328,22 @@ if __name__ == "__main__":
 
     # %%
     plt.figure()
-    plot_trajectories(3, 1, 1, domain, unit=unit, plot_neg_eps_r=True, fig_width=90*mm, fig_height=50*mm, cbar=False)
+    plot_trajectories(3, 1, 1, domain, unit=unit, plot_neg_eps_r=True, fig_width=90*mm, fig_height=50*mm)
     plt.xlim(1.5, 2.1)
     plt.savefig("out/ThreePole.pdf", dpi=1200)
+
+    # %%
+    large_domain = [0.7-0.7j, 5.0+0.05j]
+    plt.figure()
+    plot_trajectories(1, 1, 1, large_domain, unit=unit, plot_neg_eps_r=True, fig_width=90*mm, fig_height=50*mm, cbar=False)
+    plt.xlim(1.5, 2.1)
+    plt.savefig("out/zero_stop.pdf")
 
     # %%
     # %matplotlib widget
 
     oscs = [1, 0.1, 0.05, 0.025]
-    plot_domain2 = [1.6-0.14j, 1.85+0.05j]
+    plot_domain2 = [1.6-0.14j, 1.82+0.05j]
     plot_domain1 = [1.3-0.14j, 2.2+0.05j]
 
     thickness_color_ranges = [[0.19, 0.23], [0,0.4]]

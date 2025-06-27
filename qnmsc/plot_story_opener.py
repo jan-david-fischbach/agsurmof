@@ -39,6 +39,9 @@ def plot_comic(modenumber, npoles, scale_osc, scale_damping, domain, xlim=None, 
   poles, residues, thickness, material_poles = load_data(
     npoles, scale_osc, scale_damping, domain
   )
+  for i, matpole in enumerate(material_poles):
+    plt.axhline(matpole.real, color=f"C{i}")
+
   poles_tracked, residues_tracked = track_qnms(poles, residues)
 
   selection, modenumber = select_modes(npoles, scale_osc, scale_damping, domain, modenumber=modenumber)
@@ -56,15 +59,18 @@ def plot_comic(modenumber, npoles, scale_osc, scale_damping, domain, xlim=None, 
     corr = np.sum(iVii, axis=-1)
 
     om_os.append(om_o + corr)
-
-
   
   plt.plot(thickness, selected.real, color="k")
+
+  idx_last = np.argmin(np.abs(thickness - xlim[1]))
+  for i, line in enumerate(selected.real.T):
+    cent = material_poles.real[0]
+    offset = 0.04 if i==3 else 0
+    plt.text(thickness[idx_last]*1.01, (line[idx_last]-cent)*1.06 + cent + offset -0.04, f'QNM {i+1}')
+
   plt.plot(thickness, om_os, color="gray")
   plt.xlim(xlim)
   plt.ylim(ylim)
-  for i, matpole in enumerate(material_poles):
-    plt.axhline(matpole.real, color=f"C{i}")
 
   return thickness, om_os
 
@@ -90,7 +96,7 @@ def plot_cartoon(ax, path):
 
   ax.imshow(image)
   ax.axis('off')
-  ax.set_xlim(500, 2500)
+  #ax.set_xlim(500, 2500)
 
 
 # %%
@@ -99,11 +105,12 @@ from qnmsc.materials import eps_surmof
 
 
 # %%
-fig, axs = plt.subplots(3, 3, figsize=(90*mm, 90*mm), sharex="col", sharey="col", constrained_layout=True, width_ratios=[2,1,2])
+fig, axs = plt.subplots(3, 3, figsize=(90*mm, 70*mm), sharex="col", sharey="col", constrained_layout=True, width_ratios=[2,1,2])
 
 ylim = [1.4, 2.1]
+xlim = [0.4, 0.6]
 plt.sca(axs[1,2])
-thickness, om_os = plot_comic(2, 1, scale_osc, scale_damping, domain)
+thickness, om_os = plot_comic(2, 1, scale_osc, scale_damping, domain, xlim=xlim)
 hbar_omega = np.linspace(*ylim, 601)
 
 plt.sca(axs[0,2])
@@ -111,12 +118,12 @@ plt.plot(thickness, om_os, color="k")
 
 
 plt.sca(axs[2,2])
-plot_comic(2, 3, scale_osc, scale_damping, domain, xlim=[0.4, 0.6], ylim=ylim)
+plot_comic(2, 3, scale_osc, scale_damping, domain, xlim=xlim, ylim=ylim)
 
 
 npol = [0,1,3]
 for i in range(3):
-  plot_cartoon(axs[i, 0], f"assets/mmr{i+1}.svg")
+  plot_cartoon(axs[i, 0], f"assets/mmr{i+1}r2.svg")
 
   plt.sca(axs[i, 1])
   eps = eps_surmof(
@@ -167,16 +174,3 @@ fig.get_layout_engine().set(w_pad=4 / 72, h_pad=4 / 72, hspace=0.2,
 plt.savefig("out/cartoon.pdf", bbox_inches="tight", dpi=1200)
 
 # %%
-
-# %%
-
-
-
-
-
-
-
-
-
-
-
