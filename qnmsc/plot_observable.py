@@ -180,7 +180,8 @@ ax = cbar.ax
 ax.tick_params(which='both', color="white")
 
 pos = ax.get_position()
-ax.set_position([pos.x0+0.7, pos.y0, pos.width, pos.height])
+#ax.set_position([pos.x0+0.7, pos.y0, pos.width, pos.height])
+ax.set_position([pos.x0+0.07, pos.y0+0.01, pos.width, pos.height])
 
 fig.supxlabel(r"$\Re\{ \hbar \omega \}$ [eV]")
 plt.savefig("out/OscReductionObservable.pdf", bbox_inches='tight', dpi=1600)

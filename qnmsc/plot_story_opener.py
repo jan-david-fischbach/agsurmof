@@ -66,7 +66,7 @@ def plot_comic(modenumber, npoles, scale_osc, scale_damping, domain, xlim=None, 
   for i, line in enumerate(selected.real.T):
     cent = material_poles.real[0]
     offset = 0.04 if i==3 else 0
-    plt.text(thickness[idx_last]*1.01, (line[idx_last]-cent)*1.06 + cent + offset -0.04, f'QNM {i+1}')
+    plt.text(thickness[idx_last]*1.01, (line[idx_last]-cent)*1.06 + cent + offset -0.04, f'm{i+1}')
 
   plt.plot(thickness, om_os, color="gray")
   plt.xlim(xlim)
