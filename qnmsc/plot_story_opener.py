@@ -105,7 +105,7 @@ from qnmsc.materials import eps_surmof
 
 
 # %%
-fig, axs = plt.subplots(3, 3, figsize=(90*mm, 70*mm), sharex="col", sharey="col", constrained_layout=True, width_ratios=[2,1,2])
+fig, axs = plt.subplots(3, 3, figsize=(90*mm, 70*mm), sharex="col", sharey="col", constrained_layout=True, width_ratios=[1.5,1,1.5])
 
 ylim = [1.4, 2.1]
 xlim = [0.4, 0.6]
@@ -155,21 +155,40 @@ plt.xticks([])
 plt.yticks([])
 plt.ylim(ylim)
 
+plt.sca(axs[1,1])
+xlim=plt.xlim()
+ylim=plt.ylim()
+plt.xlim(xlim)
+plt.ylim(ylim)
+with open(f"assets/optical_simple.svg", "rb") as svg_file:
+  png_bytes = cairosvg.svg2png(file_obj=svg_file, dpi=1200)
+
+# Load PNG image
+image = Image.open(io.BytesIO(png_bytes))
+# Display using matplotlib
+xext = xlim[0] + 0.4*(xlim[1]-xlim[0]), xlim[1] - 0*(xlim[1]-xlim[0])
+yext = ylim[0] + 0.5*(ylim[1]-ylim[0]), ylim[1] - 0*(ylim[1]-ylim[0])
+plt.imshow(image, extent=[*xext, *yext], aspect='auto', zorder=10)
+
 for ax in axs[:, 1]:
   ax.set_ylabel(r"$\omega$")
   ax.spines['left'].set_visible(False)
   ax.axvline(0, color="k", lw=0.5)
   #axs[i, -1].yaxis.set_label_position("right")
 #fig.supylabel("Frequency $\omega$", x=1.04, ha="right")
-axs[2,1].set_ylabel(r"Frequency $\omega$")
+axs[0,1].set_ylabel(r"Frequency $\omega$")
 axs[0,1].legend(handlelength=1.2, fontsize=5, loc="upper right", framealpha=0.9, frameon=True)
+
+axs[0,0].set_title("Mechanical\nOscillators")
+axs[0,1].set_title("Drude-Lorentz\nOscillators")
+axs[0,2].set_title("Hybrid Modes")
 
 for ax in axs.flatten():
   ax.spines['right'].set_visible(False)
   ax.spines['top'].set_visible(False)
 
-fig.get_layout_engine().set(w_pad=4 / 72, h_pad=4 / 72, hspace=0.2,
-                            wspace=0)
+# fig.get_layout_engine().set(w_pad=4 / 72, h_pad=4 / 72, hspace=0.2,
+#                             wspace=0)
 
 plt.savefig("out/cartoon.pdf", bbox_inches="tight", dpi=1200)
 

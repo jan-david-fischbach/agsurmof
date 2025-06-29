@@ -67,7 +67,8 @@ def plot_splitting(
   print(f"QNMs at rabi: {selected[rabi_idx, :]}")
   
   def populate_legend():
-    plt.plot([], [], "-", color=c_fundamental, label="'uncoupled' cavity mode", lw=lw_optical, zorder=7)
+    plt.plot([], [], ls='dashdot', color=c_fundamental, label="$\omega_\mathrm{c}$", lw=lw_optical*0.5, zorder=7)
+    plt.plot([], [], "-", color=c_fundamental, label="$\omega_\mathrm{c} + \sum_j \mathrm{i} V_{j}$", lw=lw_optical, zorder=7)
     plt.plot([],[], color=c_fundamental, label="fundamental QNMs")
     plt.plot([],[], ls_higher, color=c_higher, linewidth=lw_higher, label="higher order QNMs")
     if plot_dots:
@@ -124,6 +125,7 @@ def plot_splitting(
   corr_om_os = om_os + corr
   
   plt.plot(param_interp, corr_om_os, "-", color=c_fundamental, lw=lw_optical, zorder=7)
+  plt.plot(param_interp, om_os, ls='dashdot', color=c_fundamental, lw=lw_optical*0.5, zorder=7)
 
   if color_rabi != 'none':
     plt.vlines(
@@ -218,7 +220,7 @@ if __name__ == "__main__":
 
   fig, axs, om_os, Cs, param = plot_splitting(1,3,1,1,domain, axs=axs,
     c_fundamental="white",
-    c_higher="white",
+    c_higher="k",
     c_grid=(0.4, 0.4, 0.4),
     lw_higher=0.35,
     c_fit="white",
@@ -268,10 +270,10 @@ if __name__ == "__main__":
   plt.savefig("out/Single_pole_splitting.pdf")
 
   # %%
-  fig, axs, om_os1, Cs1 = plot_splitting(1,1,1,1,domain, color_rabi="C0", return_fit=True)
-  _, _,     om_os2, Cs2 = plot_splitting(2,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
-  _, _,     om_os3, Cs3 = plot_splitting(3,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
-  _, _,     om_os4, Cs4 = plot_splitting(4,1,1,1,domain, color_rabi="C2", return_fit=True, axs=axs, xlim=(0.3, 12))
+  fig, axs, om_os1, Cs1, _ = plot_splitting(1,1,1,1,domain, color_rabi="C0", return_fit=True)
+  _, _,     om_os2, Cs2, _ = plot_splitting(2,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
+  _, _,     om_os3, Cs3, _ = plot_splitting(3,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
+  _, _,     om_os4, Cs4, _ = plot_splitting(4,1,1,1,domain, color_rabi="C2", return_fit=True, axs=axs, xlim=(0.3, 12))
 
   # %%
   cs1, cs2, cs3, cs4 = [np.real(np.sqrt(Cs)) for Cs in [Cs1, Cs2, Cs3, Cs4]]
@@ -287,7 +289,7 @@ if __name__ == "__main__":
   css = []
   axs = None
   for i, mode in enumerate([1,2,4,5]):
-    fig, axs, om_os, Cs = plot_splitting(mode,1,1,1,domain, 
+    fig, axs, om_os, Cs, _ = plot_splitting(mode,1,1,1,domain, 
       color_rabi=f"C{i}", return_fit=True, axs=axs,
       xlim=(0.2,7), inv_d=True)
   om_oss.append(om_os)
