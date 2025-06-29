@@ -78,7 +78,7 @@ for i, scale_osc in enumerate(s_oscs):
   label_thresh = 3
   plt.plot(c_(hbar_omega), Tran, color="k")
   #plt.plot(c_(hbar_omega), Refl, "--k", lw=0.4)
-  axss[1,i].plot(c_(hbar_omega), Abs, "k")
+  axss[-1,i].plot(c_(hbar_omega), Abs, "k")
   plt.xlim(min(c_(hbar_omega)), max(c_(hbar_omega)))
 
   fit = diffaaable.aaa(hbar_omega, t)
@@ -101,6 +101,8 @@ for i, scale_osc in enumerate(s_oscs):
     #plt.plot(hbar_omega, np.abs(contrib), color='gray')
 
     plt.plot(c_(hbar_omega), factors[i]* np.abs(contrib)**2, color=f'C{j}', alpha=0.4, label=f"mode {j+1}")
+
+
   #plt.plot(hbar_omega, np.real(np.sum(contributions, axis=-1)), color=f'C{i}')
 
   # print(f"poles: {poles}; residues: {residues}")
@@ -109,12 +111,15 @@ for i, scale_osc in enumerate(s_oscs):
 
   #plt.text(390, 1, f"$\\frac{{\Omega_{{\mathrm{{Rabi}}}}}}{{2}} \\approx {f_rabis[i]/2:.3f} \;$ eV\n$|g| \\approx {gs[i]:.3f} \;$ eV\n$\gamma_\mathrm{{avg}} \\approx {avg_loss} \;$ eV", size=4, ha="right")
 
+axss[0, -2].set_ylabel("Modal Contrib. [a.u.]")
+axss[0, -2].yaxis.set_label_position("right")
+
 axs[0].set_title(f"Oscillator Strength Scaling:\n{s_oscs[0]:.3f}")
 axs[0].set_ylabel("$T = |t|^2$")
 #axs[3].legend(loc='upper right', fontsize=5)
 plt.ylim((0, None))
 
-axs = axss[-1]
+axs = axss[1]
 thicknesses = np.linspace(0.0, 0.41, 401)
 lw_qnm=0.2
 for i, scale_osc in enumerate([0.025, 0.05, 0.1, 1]):
@@ -147,9 +152,6 @@ for i, scale_osc in enumerate([0.025, 0.05, 0.1, 1]):
 #   if factor == 1:
 #     continue
 
-axss[0, -2].set_ylabel("Modal Contrib. [a.u.]")
-axss[0, -2].yaxis.set_label_position("right")
-
 #plt.plot(range(5), range(5), 'ro', markersize=20, clip_on=False, zorder=100)
 
 #   axs[i].plot([1.9, 2], [0.39, 0.39],   alpha=0.4, color='C0')
@@ -167,15 +169,15 @@ for i, axs in enumerate(axss.T[:-1]):
           bbox=dict(facecolor=(1,1,1,0.8), edgecolor='none', pad=2.0))
 
 #plt.plot([],[], color='white', lw=lw_qnm, label="QNMs")
-plt.ylim(min(thicknesses), max(thicknesses))
-axss[1,0].set_ylabel(f"$1-T-R$")
-axss[-1,0].set_ylabel(f"$d$ [{um}]")
+axss[-1,0].set_ylabel(f"$1-T-R$")
+axss[1,0].set_ylim(min(thicknesses), max(thicknesses))
+axss[1,0].set_ylabel(f"$d$ [{um}]")
 #axs[-1].legend(labelcolor='white')
 
 axss[0, -1].axis('off')
-axss[1, -1].axis('off')
+axss[-1, -1].axis('off')
 
-cbar = plt.colorbar(cm, cax=axss[-1][-1], label="$T = |t|^2$")
+cbar = plt.colorbar(cm, cax=axss[1][-1], label="$T = |t|^2$")
 ax = cbar.ax
 ax.tick_params(which='both', color="white")
 

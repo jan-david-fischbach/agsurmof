@@ -35,7 +35,7 @@ def filename(npoles, osc_strength, damping, domain):
   return file
 
 def find_qnms(ts, npoles=3, osc_strength=1, damping=1, 
-              domain=[1-0.5j, 2.5+0.05j], checkpointing=True, plotting=True):
+              domain=[1-0.5j, 2.5+0.05j], checkpointing=True, plotting=True, Dmax=22, tol_aaa=1e-9, N=100):
   """Find the poles of the S-matrix of a surmof cavity 
 
   Args:
@@ -75,7 +75,7 @@ def find_qnms(ts, npoles=3, osc_strength=1, damping=1,
 
     poles, residues, evals = selective_refinement_aaa(
       f, domain=domain, 
-      N=100, use_adaptive=False, tol_pol=1e-7, Dmax=22)
+      N=100, use_adaptive=False, tol_aaa=tol_aaa, tol_pol=1e-7, Dmax=Dmax)
                     
     all_poles.append(poles)
     all_residues.append(residues)
@@ -170,17 +170,17 @@ if __name__ == "__main__":
   ts = 0.005*(np.arange(1, 120)+1)
   domain = [1-0.5j, 2.5+0.05j]
 
-  for npoles in [0, 1,3]:
+  for npoles in [0, 1, 3]:
     all_poles, all_residues = find_qnms(
       ts, npoles=npoles, osc_strength=1, damping=1, domain=domain, 
       checkpointing=True
     )
 
-  for osc in [1, 0.25, 0.1, 0.07, 0.05, 0.025, 0.01]:
-    all_poles, all_residues = find_qnms(
-      ts, npoles=1, osc_strength=osc, damping=1, domain=domain, 
-      checkpointing=True
-    )
+  # for osc in [1, 0.25, 0.1, 0.07, 0.05, 0.025, 0.01]:
+  #   all_poles, all_residues = find_qnms(
+  #     ts, npoles=1, osc_strength=osc, damping=1, domain=domain, 
+  #     checkpointing=True
+  #   )
 
 # %%
   ts = 0.005*(np.arange(1, 240)+1)
@@ -216,8 +216,8 @@ if __name__ == "__main__":
   ts = np.unique(ts)
   
   domain = [1-0.5j, 2.5+0.05j]
-  for osc in [0.05, 0.025]:
+  for osc in [0.1, 0.05, 0.025]:
     all_poles, all_residues = find_qnms(
-      ts, npoles=1, osc_strength=osc, damping=1, domain=domain, 
+      ts, npoles=1, osc_strength=osc, damping=1, domain=domain,  N=400, tol_aaa=1e-10,
       checkpointing=True
     )

@@ -117,10 +117,10 @@ def select_modes(npoles, scale_osc, scale_damping, domain, modenumber=1, force=F
   plot_thickness(npoles, scale_osc, scale_damping, domain, inv=False, horizontal=True)
   label_tracked_qnms(poles_tracked, thickness)
   plt.title(f"Select Modes m={modenumber}")
-  plt.show(block=True)
+  plt.show(block=False)
 
   while True:
-    print("Please select the modes as a comma separated list")
+    print(f"Please select the modes (m={modenumber}) as a comma separated list")
     user_selection = input()
     select = user_selection.split(",")
     if len(select) != npoles + 1:
@@ -141,6 +141,7 @@ def select_modes(npoles, scale_osc, scale_damping, domain, modenumber=1, force=F
     
     select = select[select>=0] # enter -1 to avoid selecting a mode (e.g. if outside of domain)
     np.save(select_fname, select)
+    plt.close("Select Modes")
     return select, modenumber
 
 # %%
@@ -198,7 +199,7 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
     )
   else:
     fig = plt.gcf()
-  plt.sca(axs[0])
+  plt.sca(axs[1])
 
   # hbar_omega is the photon energy
   # as such it is denoted as e and E for brevity
@@ -259,19 +260,29 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
 
   if labels:
     plt.ylabel(f"$\Im\{{{q_}\}}$ [{u_}]")
+    plt.xlabel(f"$\Re\{{{q_}\}}$ [{u_}]")
 
   plt.axhline(0, color="k", lw=0.4)
   # Negative Real Eps regions
   if plot_neg_eps_r:
     plt.fill_between(c_(e_r), 0, 1, hatch="\\\\\\", where=eps_r.real<0, color="none", edgecolor="k", transform=plt.gca().get_xaxis_transform(), lw=0.5)
 
-    plt.sca(axs[1])
+    plt.sca(axs[0])
     plt.fill_between(c_(e_r), 0, 1, hatch="\\\\\\", where=eps_r.real<0, color="none", edgecolor="k", transform=plt.gca().get_xaxis_transform(), lw=0.5, zorder=5)
   else:
-    plt.sca(axs[1])
+    plt.sca(axs[0])
 
-  all_modes = set(range(len(poles_tracked.T)))
-  for i in range(1, num_modes+1):
+  
+  all_modes = np.array(range(len(poles_tracked.T)), dtype=int)
+  for pole, res in zip(poles_tracked.T[all_modes], residues_tracked.T[all_modes]):
+      real = np.interp(interp_d, thickness, pole.real)
+      imag = np.interp(interp_d, thickness, pole.imag)
+      s = np.interp(interp_d, thickness, np.abs(res))/(-imag)
+      s = np.sqrt(s)
+      plt.scatter(c_(real), interp_d, color=[0.8,0.8,0.8], edgecolor='none', s=s, rasterized=True)
+
+  all_modes = set(all_modes)
+  for i in range(1, num_modes+1)[::-1]:
     selection, _ = select_modes(npoles, scale_osc, scale_damping, domain, modenumber=i)
     all_modes -= set(selection)
 
@@ -292,13 +303,6 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
       else:
         plt.scatter(c_(real), interp_d, color=new_rgba, edgecolor='none', s=s, rasterized=True)
 
-  all_modes = np.array(list(all_modes), dtype=int)
-  for pole, res in zip(poles_tracked.T[all_modes], residues_tracked.T[all_modes]):
-      real = np.interp(interp_d, thickness, pole.real)
-      imag = np.interp(interp_d, thickness, pole.imag)
-      s = np.interp(interp_d, thickness, np.abs(res))/(-imag)
-      plt.scatter(c_(real), interp_d, color=[0.8,0.8,0.8], edgecolor='none', s=s, rasterized=True)
-
   plt.ylim(0, max(interp_d))
   plt.xlim(min(c_(e_r)), max(c_(e_r)))
   fig.align_ylabels()
@@ -315,7 +319,6 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
 
   if labels:
     plt.ylabel(f"$d$ [{um}]")
-    plt.xlabel(f"$\Re\{{{q_}\}}$ [{u_}]")
 
   return pcm, cmap, thickness_color_norm
 
@@ -381,18 +384,18 @@ if __name__ == "__main__":
     # cb.set_ticklabels(["-$10^3$", -1, 0, 1, "$10^3$"])
 
     mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norms[1])
-    cb = fig.colorbar(mappable, cax=axss[0, 3])
+    cb = fig.colorbar(mappable, cax=axss[1, 3])
     cb.set_label(f"$d$ [{um}]", labelpad=-10)
     cb.ax.zorder = -1
 
     mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norms[3])
-    cb = fig.colorbar(mappable, cax=axss[0, -1], label=f"$d$ [{um}]")
+    cb = fig.colorbar(mappable, cax=axss[1, -1], label=f"$d$ [{um}]")
     cb.ax.zorder = -1
 
     axss[0,0].set_title(f"Oscillator Strength Scaling:\n{oscs[-1]}")
     fig.supxlabel(f"$\Re\{{{qty_str[unit]}\}}$ [{unit}]")
-    axss[0,0].set_ylabel(f"$\Im\{{{qty_str[unit]}\}}$ [{unit}]")
-    axss[1,0].set_ylabel(f"$d$ [{um}]")
+    axss[1,0].set_ylabel(f"$\Im\{{{qty_str[unit]}\}}$ [{unit}]")
+    axss[0,0].set_ylabel(f"$d$ [{um}]")
 
     for axs in axss.T[np.array([1,2,4])]:
       axs[0].sharey(axss[0,0])
@@ -400,8 +403,8 @@ if __name__ == "__main__":
       axs[1].sharey(axss[1,0])
       axs[1].tick_params(axis='y',labelleft=False)
 
-    axss[1, 3].axis("off")
-    axss[1, 5].axis("off")
+    axss[0, 3].axis("off")
+    axss[0, 5].axis("off")
 
 
     # zorder_indicators = 0
