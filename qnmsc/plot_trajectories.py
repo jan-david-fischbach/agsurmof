@@ -392,7 +392,7 @@ if __name__ == "__main__":
     cb = fig.colorbar(mappable, cax=axss[1, -1], label=f"$d$ [{um}]")
     cb.ax.zorder = -1
 
-    axss[0,0].set_title(f"Oscillator Strength Scaling:\n{oscs[-1]}")
+    axss[0,0].set_title(f"$\eta$: {oscs[-1]}")
     fig.supxlabel(f"$\Re\{{{qty_str[unit]}\}}$ [{unit}]")
     axss[1,0].set_ylabel(f"$\Im\{{{qty_str[unit]}\}}$ [{unit}]")
     axss[0,0].set_ylabel(f"$d$ [{um}]")

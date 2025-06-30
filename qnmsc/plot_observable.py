@@ -114,7 +114,7 @@ for i, scale_osc in enumerate(s_oscs):
 axss[0, -2].set_ylabel("Modal Contrib. [a.u.]")
 axss[0, -2].yaxis.set_label_position("right")
 
-axs[0].set_title(f"Oscillator Strength Scaling:\n{s_oscs[0]:.3f}")
+axs[0].set_title(f"$\eta$: {s_oscs[0]:.3f}")
 axs[0].set_ylabel("$T = |t|^2$")
 #axs[3].legend(loc='upper right', fontsize=5)
 plt.ylim((0, None))
