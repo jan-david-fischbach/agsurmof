@@ -308,7 +308,7 @@ for i, osc_strength in enumerate([0.1, 0.25, 0.5, 1]):
 cbar_ax = axs[0, -1]
 cbar = plt.colorbar(ax=cbar_ax, mappable=mappable, fraction=1, label=rf'$r_\mathrm{{outer}}$ [{um}]')
 
-axs[0, 0].set_title(f"Oscillator Strength Scaling:\n{0.1}")
+axs[0, 0].set_title(f"Oscillator Strength Scaling:\n{0.01}")
 
 axs[0, 0].set_ylabel("$\Im\{\hbar \omega\}$ [eV]")
 axs[0, 0].yaxis.label.set_position((-0.2, 0.25))

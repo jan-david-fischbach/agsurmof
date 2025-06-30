@@ -189,6 +189,17 @@ for ax in axs.flatten():
 
 # fig.get_layout_engine().set(w_pad=4 / 72, h_pad=4 / 72, hspace=0.2,
 #                             wspace=0)
+for j, axj in enumerate(axs.T):
+  for i, ax in enumerate(axj):
+    letter = chr(ord("a")+i)
+    x = 0.8 if j == 2 else 0.02
+    alpha = 1 if j==0 else 0 
+    ax.annotate(
+          f" ({letter}{j+1})",
+          xy=(x, 1), xycoords='axes fraction',
+          xytext=(+0.5, -0.5), textcoords='offset fontsize',
+          fontsize='medium', verticalalignment='top', fontfamily='serif',
+          bbox=dict(facecolor=(1,1,1,alpha), edgecolor='none', pad=2.0))
 
 plt.savefig("out/cartoon.pdf", bbox_inches="tight", dpi=1200)
 
