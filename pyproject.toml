@@ -17,6 +17,7 @@ dependencies = [
     "jpu>=0.0.4",
     "jupytext>=1.16.7",
     "matplotlib>=3.10.0",
+    "matplotview>=1.0.1",
     "pyqt6>=6.8.1",
     "scienceplots>=2.1.1",
     "staaax>=0.2.0",

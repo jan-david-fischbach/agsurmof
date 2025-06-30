@@ -905,6 +905,19 @@ wheels = [
 ]
 
 [[package]]
+name = "matplotview"
+version = "1.0.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "matplotlib" },
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/bc/e5/2f1b2945d15ec0ea02c6bd16fff0a3cad11424a58c53852763bde414d186/matplotview-1.0.1.tar.gz", hash = "sha256:877566f57520e10930b187e1d0afcae4c0b4f1a6ab6a56093fd593299e1a2505", size = 12412 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/48/2d/fe60e93b7ef60d7c56e4412e527513a2e7876ec777bd77c24a9d43f5009d/matplotview-1.0.1-py3-none-any.whl", hash = "sha256:ce432e836d8faf994e693a8ad18f93777a7a24f200a878e2dcc115306809a24e", size = 13348 },
+]
+
+[[package]]
 name = "mdit-py-plugins"
 version = "0.4.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1637,6 +1650,7 @@ dependencies = [
     { name = "jpu" },
     { name = "jupytext" },
     { name = "matplotlib" },
+    { name = "matplotview" },
     { name = "pyqt6" },
     { name = "scienceplots" },
     { name = "staaax" },
@@ -1652,6 +1666,7 @@ requires-dist = [
     { name = "jpu", specifier = ">=0.0.4" },
     { name = "jupytext", specifier = ">=1.16.7" },
     { name = "matplotlib", specifier = ">=3.10.0" },
+    { name = "matplotview", specifier = ">=1.0.1" },
     { name = "pyqt6", specifier = ">=6.8.1" },
     { name = "scienceplots", specifier = ">=2.1.1" },
     { name = "staaax", specifier = ">=0.2.0" },

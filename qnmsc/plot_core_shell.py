@@ -292,9 +292,11 @@ to_eV(calc_material_poles(1, 1))
 fig, axs = plt.subplots(3, 5, sharey="row", figsize=(180*mm,70*mm), sharex='col', height_ratios=[1.5, 0.5, 1], width_ratios=[1]*4+[0.15]) #constrained_layout=True,
 
 
-plot_domain2 = [[1.6-0.1199j, 1.85+0.02j], [1.6-0.53j, 1.85-0.4801j]]
+# plot_domain2 = [[1.6-0.1199j, 1.85+0.02j], [1.6-0.53j, 1.85-0.4801j]]
+# plot_domain1 = [[1.3-0.1199j, 2.2 +0.02j], [1.3-0.53j, 2.2-0.4801j]]
 
-plot_domain1 = [[1.3-0.1199j, 2.2 +0.02j], [1.3-0.53j, 2.2-0.4801j]]
+plot_domain2 = [[1.6-0.1199j, 1.85], [1.6-0.53j, 1.85-0.4801j]]
+plot_domain1 = [[1.3-0.1199j, 2.2 ], [1.3-0.53j, 2.2-0.4801j]]
 
 for i, osc_strength in enumerate([0.1, 0.25, 0.5, 1]):
   plot_domain = plot_domain1 if osc_strength == 1 else plot_domain2
