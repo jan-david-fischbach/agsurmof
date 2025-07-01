@@ -312,9 +312,8 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
       else:
         plt.scatter(c_(real), interp_d, color=new_rgba, edgecolor='none', s=s, rasterized=True)
 
-  plt.ylim(0, max(interp_d))
+  plt.ylim(0, np.nanmax(interp_d))
   plt.xlim(min(c_(e_r)), max(c_(e_r)))
-  fig.align_ylabels()
 
   for i, ax in enumerate(axs):
     letter = chr(ord("a")+i)
@@ -328,6 +327,7 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
 
   if labels:
     plt.ylabel(f"$d$ [{um}]")
+    fig.align_ylabels()
 
   return pcm, cmap, thickness_color_norm
 
@@ -374,7 +374,7 @@ if __name__ == "__main__":
     suffix = 1
 
     norms = []
-    for osc, axs in zip(oscs[::-1], axss.T[np.array([0,1,2,5])]):
+    for osc, axs in list(zip(oscs[::-1], axss.T[np.array([0,1,2,5])]))[1:2]:
 
       vmin, vmax = thickness_color_ranges[osc >= thresh]
       pcm, cmap, norm = plot_trajectories(
@@ -389,10 +389,10 @@ if __name__ == "__main__":
       axs[0].set_title(rf"$\eta = \num{{{osc:.3f}}}$")
       norms.append(norm)
 
-    axins = axss[1,1].inset_axis(
-      [0.5, 0.05, 0.47, 0.43],
-      xlim=(1.72, 1.75),
-      ylim=(0.19, 0.25),
+    axins = axss[1,1].inset_axes(
+      [0.55, 0.05, 0.43, 0.38],
+      xlim=(1.73, 1.74),
+      ylim=(0.205, 0.23),
       xticklabels=[], yticklabels=[]
     )
 
@@ -405,17 +405,22 @@ if __name__ == "__main__":
     poles_tracked, residues_tracked = track_qnms(poles, residues)
     selection, _ = select_modes(npoles, scale_osc, scale_damping, domain, modenumber=1)
     poles_tracked = poles_tracked.T[selection]
-    axins.plot(poles_tracked.T, color="C0")
+    print(poles_tracked)
+    axins.plot(poles_tracked.real.T, thickness, color="C0")
 
     # Draw the indicator or zoom lines.
     axss[1,1].indicate_inset_zoom(axins, edgecolor="black")
-    
   
     # cb = plt.colorbar(pcm,
     #   label="$\Re\{\\varepsilon_\mathrm{r}\}$", 
     #   ticks=[-1e3, -1, 0, 1, 1e3], cax=axss[0, -1]
     # )
     # cb.set_ticklabels(["-$10^3$", -1, 0, 1, "$10^3$"])
+
+    if len(norms) < 4:
+      norms = [norms[0]]*4
+    axss[1,0].set_ylim(0, 0.4)
+
 
     mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norms[1])
     cb = fig.colorbar(mappable, cax=axss[0, 3])
