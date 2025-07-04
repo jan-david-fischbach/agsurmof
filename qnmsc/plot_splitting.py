@@ -124,8 +124,8 @@ def plot_splitting(
   corr = np.sum(iVii, axis=-1)
   corr_om_os = om_os + corr
   
-  plt.plot(param_interp, corr_om_os, "-", color=c_fundamental, lw=lw_optical, zorder=7)
-  plt.plot(param_interp, om_os, ls='dashdot', color=c_fundamental, lw=lw_optical*0.5, zorder=7)
+  plt.plot(param_interp, corr_om_os.real, "-", color=c_fundamental, lw=lw_optical, zorder=7)
+  plt.plot(param_interp, om_os.real, ls='dashdot', color=c_fundamental, lw=lw_optical*0.5, zorder=7)
 
   if color_rabi != 'none':
     plt.vlines(
@@ -260,9 +260,9 @@ if __name__ == "__main__":
   corr = np.sum(iVii, axis=-1)
   corr_om_os = om_os + corr
   
-  plt.plot(param, corr_om_os, "-")
+  plt.plot(param, corr_om_os.real, "-")
   plt.plot(1/thickness_0pole, poles_tracked_0pole[:,0], ".")
-  plt.plot(param, om_os, "-")
+  plt.plot(param, om_os.real, "-")
 
   # %%
   # %matplotlib widget

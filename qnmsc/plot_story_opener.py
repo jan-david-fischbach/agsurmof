@@ -68,7 +68,7 @@ def plot_comic(modenumber, npoles, scale_osc, scale_damping, domain, xlim=None, 
     offset = 0.04 if i==3 else 0
     plt.text(thickness[idx_last]*1.01, (line[idx_last]-cent)*1.06 + cent + offset -0.04, f'm{i+1}')
 
-  plt.plot(thickness, om_os, color="gray")
+  plt.plot(thickness, om_os.real, color="gray")
   plt.xlim(xlim)
   plt.ylim(ylim)
 
@@ -110,7 +110,7 @@ thickness, om_os = plot_comic(2, 1, scale_osc, scale_damping, domain, xlim=xlim)
 hbar_omega = np.linspace(*ylim, 601)
 
 plt.sca(axs[0,2])
-plt.plot(thickness, om_os, color="k")
+plt.plot(thickness, om_os.real, color="k")
 
 
 plt.sca(axs[2,2])
