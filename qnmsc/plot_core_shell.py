@@ -305,12 +305,12 @@ for i, osc_strength in enumerate([0.1, 0.25, 0.5, 1]):
     colors = mode_to_color[osc_strength], label_suffix=f"{i+1}",
     plot_domain=plot_domain
   )
-  axs[0, i].set_title(f"{osc_strength**2:.3f}")
+  axs[0, i].set_title(f"$\eta$ = {osc_strength**2:.3f}")
 
 cbar_ax = axs[0, -1]
 cbar = plt.colorbar(ax=cbar_ax, mappable=mappable, fraction=1, label=rf'$r_\mathrm{{outer}}$ [{um}]')
 
-axs[0, 0].set_title(f"$\eta$: {list(mode_to_color.keys())[-1]**2:.2f}")
+# axs[0, 0].set_title(f"$\eta$: {list(mode_to_color.keys())[-1]**2:.2f}")
 
 axs[0, 0].set_ylabel("$\Im\{\hbar \omega\}$ [eV]")
 axs[0, 0].yaxis.label.set_position((-0.2, 0.25))

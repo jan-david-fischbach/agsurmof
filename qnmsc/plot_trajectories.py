@@ -187,7 +187,8 @@ def size(res, imag):
 def plot_trajectories(npoles, scale_osc, scale_damping, domain, 
   plot_domain = [1-0.06j, 2.5+0.01j], fig_width = 90*mm, fig_height = 80*mm,
   unit = "eV", axs=None, cbar=True, labels=True, plot_neg_eps_r=False, d_limit=np.inf, 
-  color_thickness=False, num_modes = 4, upsample=10, label_suffix="", thickness_color_norm=None, eps_background=True
+  color_thickness=False, num_modes = 4, upsample=10, label_suffix="", 
+  thickness_color_norm=None, eps_background=True, linewidth_modes=[]
   ):
 
   c_ = unit_conversion[unit]
@@ -266,7 +267,6 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
 
   if labels:
     plt.ylabel(f"$\Im\{{{q_}\}}$ [{u_}]")
-    plt.xlabel(f"$\Re\{{{q_}\}}$ [{u_}]")
 
   plt.axhline(0, color="k", lw=0.4)
   # Negative Real Eps regions
@@ -295,6 +295,14 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
     for j, (pole, res) in enumerate(zip(poles_tracked.T[selection], residues_tracked.T[selection])):
       real = np.interp(interp_d, thickness, pole.real)
       imag = np.interp(interp_d, thickness, pole.imag)
+
+      if i in linewidth_modes:
+        plt.fill_betweenx(interp_d, 
+          c_(real-imag), c_(real+imag), 
+          color=[0.9,0.9,0.9],
+          zorder=-2
+        )
+          
       s = size(np.interp(interp_d, thickness, np.abs(res)), imag)
 
       c0_rgba = mcolors.to_rgba(f"C{i-1}")
@@ -327,23 +335,36 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
 
   if labels:
     plt.ylabel(f"$d$ [{um}]")
+    plt.xlabel(f"$\Re\{{{q_}\}}$ [{u_}]")
     fig.align_ylabels()
 
   return pcm, cmap, thickness_color_norm
 
 # %%
 if __name__ == "__main__":
-    from matplotview import inset_zoom_axes
     unit = "eV"
     # plt.figure()
     # plot_trajectories(1, 1, 1, domain, unit=unit, fig_width=90*mm, fig_height=50*mm)
     # plt.savefig("out/SinglePole.pdf", dpi=1200)
 
     # # %%
-    # plt.figure()
-    # plot_trajectories(3, 1, 1, domain, unit=unit, plot_neg_eps_r=True, fig_width=90*mm, fig_height=50*mm, plot_domain=[1-0.06j, 2.5])
-    # plt.xlim(1.5, 2.1)
-    # plt.savefig("out/ThreePole.pdf", dpi=1200)
+    fig, axss = plt.subplots(
+        2, 3, sharex="col",
+        figsize=(90*mm,60*mm),  
+        width_ratios=[1,0.03,0.03],
+        height_ratios=[1, 0.6], constrained_layout=True
+        )
+    pcm, cmap, norm = plot_trajectories(3, 1, 1, domain, unit=unit, plot_neg_eps_r=True, axs=axss[:,0], plot_domain=[1-0.06j, 2.5], upsample=4, cbar=False)
+    plt.xlim(1.5, 2.1)
+    mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
+    cb = plt.colorbar(mappable, cax=axss[0, 1], label=f"$d$ [{um}]")
+
+    cb = plt.colorbar(pcm, cax=axss[0, 2], label="$\Re\{\\varepsilon_\mathrm{r}\}$", ticks=[-1e3, -1, 0, 1, 1e3])
+    cb.set_ticklabels(["-$10^3$", -1, 0, 1, "$10^3$"])
+
+    axss[1,1].axis("off")
+    axss[1,2].axis("off")
+    plt.savefig("out/ThreePole.pdf", dpi=1200)
 
     # # %%
     # large_domain = [0.7-0.7j, 5.0+0.05j]
@@ -374,7 +395,7 @@ if __name__ == "__main__":
     suffix = 1
 
     norms = []
-    for osc, axs in list(zip(oscs[::-1], axss.T[np.array([0,1,2,5])]))[1:2]:
+    for osc, axs in list(zip(oscs[::-1], axss.T[np.array([0,1,2,5])])):
 
       vmin, vmax = thickness_color_ranges[osc >= thresh]
       pcm, cmap, norm = plot_trajectories(
@@ -383,14 +404,14 @@ if __name__ == "__main__":
           unit=unit, axs=axs, cbar=False, labels=False, d_limit=0.4, 
           upsample=10, label_suffix = suffix,
           thickness_color_norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax),
-          eps_background=False
+          eps_background=False, linewidth_modes=[1]
       )
       suffix += 1
       axs[0].set_title(rf"$\eta = \num{{{osc:.3f}}}$")
       norms.append(norm)
 
     axins = axss[1,1].inset_axes(
-      [0.55, 0.05, 0.43, 0.38],
+      [0.55, 0.09, 0.4, 0.34],
       xlim=(1.73, 1.74),
       ylim=(0.205, 0.23),
       xticklabels=[], yticklabels=[]
@@ -405,8 +426,8 @@ if __name__ == "__main__":
     poles_tracked, residues_tracked = track_qnms(poles, residues)
     selection, _ = select_modes(npoles, scale_osc, scale_damping, domain, modenumber=1)
     poles_tracked = poles_tracked.T[selection]
-    print(poles_tracked)
-    axins.plot(poles_tracked.real.T, thickness, color="C0")
+    axins.plot(poles_tracked.real.T, thickness, color="#96a8b4")
+    axins.tick_params(axis='y', which='minor', left=False, right=False)
 
     # Draw the indicator or zoom lines.
     axss[1,1].indicate_inset_zoom(axins, edgecolor="black")
@@ -421,22 +442,24 @@ if __name__ == "__main__":
       norms = [norms[0]]*4
     axss[1,0].set_ylim(0, 0.4)
 
-
+    shrink=0.8
     mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norms[1])
-    cb = fig.colorbar(mappable, cax=axss[0, 3])
+    cb = fig.colorbar(mappable, cax=axss[0, 3], shrink=shrink)
     #cb.set_label(f"$d$ [{um}]", labelpad=-10)
     cb.ax.set_title(f"$d$ [{um}]", loc='left')
     cb.ax.zorder = -1
 
     mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norms[3])
-    cb = fig.colorbar(mappable, cax=axss[0, -1])
+    cb = fig.colorbar(mappable, cax=axss[0, -1], shrink=shrink)
     cb.ax.set_title(f"$d$ [{um}]", loc='left')
     cb.ax.zorder = -1
 
     #axss[0,0].set_title(f"$\eta$ = {oscs[-1]}")
-    fig.supxlabel(f"$\Re\{{{qty_str[unit]}\}}$ [{unit}]")
+    fig.supxlabel(f"$\Re\{{{qty_str[unit]}\}}$ [{unit}]", y=0.08)
     axss[0,0].set_ylabel(f"$\Im\{{{qty_str[unit]}\}}$ [{unit}]")
     axss[1,0].set_ylabel(f"$d$ [{um}]")
+
+    fig.align_ylabels()
 
     for axs in axss.T[np.array([1,2,5])]:
       axs[0].sharey(axss[0,0])

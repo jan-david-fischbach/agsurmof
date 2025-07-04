@@ -221,3 +221,11 @@ if __name__ == "__main__":
       ts, npoles=1, osc_strength=osc, damping=1, domain=domain,  N=400, tol_aaa=1e-10,
       checkpointing=True
     )
+
+# %%
+  ts = 0.2 + 0.000125*(np.arange(81, 161)+1)
+  osc = 0.05
+  all_poles, all_residues = find_qnms(
+    ts, npoles=1, osc_strength=osc, damping=1, domain=domain,  N=400, tol_aaa=1e-10,
+    checkpointing=True
+  )

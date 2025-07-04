@@ -76,8 +76,6 @@ def plot_comic(modenumber, npoles, scale_osc, scale_damping, domain, xlim=None, 
 
 # %%
 from PIL import Image
-import cairosvg
-import io
 
 def plot_cartoon(ax, path):
   """
@@ -87,16 +85,14 @@ def plot_cartoon(ax, path):
       ax (Axes): The matplotlib Axes object where the image will be displayed.
       path (str, optional): File path of the svg file
   """
-  with open(path, "rb") as svg_file:
-    png_bytes = cairosvg.svg2png(file_obj=svg_file, dpi=1200)
 
   # Load PNG image
-  image = Image.open(io.BytesIO(png_bytes))
+  image = Image.open(path)
   # Display using matplotlib
 
   ax.imshow(image)
   ax.axis('off')
-  #ax.set_xlim(500, 2500)
+  ax.set_xlim(300, 1550)
 
 
 # %%
@@ -105,7 +101,7 @@ from qnmsc.materials import eps_surmof
 
 
 # %%
-fig, axs = plt.subplots(3, 3, figsize=(90*mm, 70*mm), sharex="col", sharey="col", constrained_layout=True, width_ratios=[1.5,1,1.5])
+fig, axs = plt.subplots(3, 3, figsize=(90*mm, 70*mm), sharex="col", sharey="col", constrained_layout=True, width_ratios=[1,1,1.5])
 
 ylim = [1.4, 2.1]
 xlim = [0.4, 0.6]
@@ -123,7 +119,7 @@ plot_comic(2, 3, scale_osc, scale_damping, domain, xlim=xlim, ylim=ylim)
 
 npol = [0,1,3]
 for i in range(3):
-  plot_cartoon(axs[i, 0], f"assets/mmr{i+1}r2.svg")
+  plot_cartoon(axs[i, 0], f"assets/cavity_{i+1}.png")
 
   plt.sca(axs[i, 1])
   eps = eps_surmof(
@@ -139,7 +135,7 @@ for i in range(3):
 
   material_poles = to_eV(calc_material_poles(scale_osc, scale_damping))[:npol[i]]
   for j, matpole in enumerate(material_poles):
-    plt.plot([0, eps.imag[np.argmin(np.abs(hbar_omega - matpole.real))]], [matpole.real]*2, color=f"C{j}", lw=0.3)
+    plt.plot([0, eps.imag[np.argmin(np.abs(hbar_omega - matpole.real))]], [matpole.real]*2, color=f"C{j}", lw=lw)
   #plt.xlim((-0.5, 2))
 
 
@@ -160,15 +156,6 @@ xlim=plt.xlim()
 ylim=plt.ylim()
 plt.xlim(xlim)
 plt.ylim(ylim)
-with open(f"assets/optical_simple.svg", "rb") as svg_file:
-  png_bytes = cairosvg.svg2png(file_obj=svg_file, dpi=1200)
-
-# Load PNG image
-image = Image.open(io.BytesIO(png_bytes))
-# Display using matplotlib
-xext = xlim[0] + 0.4*(xlim[1]-xlim[0]), xlim[1] - 0*(xlim[1]-xlim[0])
-yext = ylim[0] + 0.5*(ylim[1]-ylim[0]), ylim[1] - 0*(ylim[1]-ylim[0])
-plt.imshow(image, extent=[*xext, *yext], aspect='auto', zorder=10)
 
 for ax in axs[:, 1]:
   ax.set_ylabel(r"$\omega$")
@@ -179,9 +166,9 @@ for ax in axs[:, 1]:
 axs[0,1].set_ylabel(r"Frequency $\omega$")
 axs[0,1].legend(handlelength=1.2, fontsize=5, loc="upper right", framealpha=0.9, frameon=True)
 
-axs[0,0].set_title("Mechanical\nOscillators")
-axs[0,1].set_title("Drude-Lorentz\nOscillators")
-axs[0,2].set_title("Hybrid Modes")
+# axs[0,0].set_title("Mechanical\nOscillators")
+# axs[0,1].set_title("Drude-Lorentz\nOscillators")
+# axs[0,2].set_title("Hybrid Modes")
 
 for ax in axs.flatten():
   ax.spines['right'].set_visible(False)
