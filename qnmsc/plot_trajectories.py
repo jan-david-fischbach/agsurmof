@@ -188,7 +188,7 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
   plot_domain = [1-0.06j, 2.5+0.01j], fig_width = 90*mm, fig_height = 80*mm,
   unit = "eV", axs=None, cbar=True, labels=True, plot_neg_eps_r=False, d_limit=np.inf, 
   color_thickness=False, num_modes = 4, upsample=10, label_suffix="", 
-  thickness_color_norm=None, eps_background=True, linewidth_modes=[]
+  thickness_color_norm=None, eps_background=True, linewidth_modes=[], arrows=False, add_arrow_angle=np.pi/16
   ):
 
   c_ = unit_conversion[unit]
@@ -227,7 +227,7 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
   if eps_background:
     pcm = plt.pcolormesh(c_(E_r), c_(E_i), np.real(eps), norm=mpl.colors.SymLogNorm(linthresh=0.1,
                       vmin=-1000.0, vmax=1000.0, base=10), shading='gouraud',
-                      cmap="RdBu", rasterized=True)
+                      cmap="RdBu", rasterized=True, zorder=-2)
 
     if cbar:
       cb = plt.colorbar(
@@ -259,11 +259,36 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
     thickness_color_norm = mpl.colors.Normalize(vmin=min(interp_d), vmax=max(interp_d))
   colors_interp = cmap(thickness_color_norm(interp_d))
 
+  bbox = plt.gca().get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+  aspect_ratio = bbox.width / bbox.height
+  a = 1/np.sqrt(aspect_ratio)
+  # Plot Trajectories
   for i, (pole, res) in enumerate(zip(poles_tracked.T, residues_tracked.T)):
     real = np.interp(interp_d, thickness, pole.real)
     imag = np.interp(interp_d, thickness, pole.imag)
     s = size(np.interp(interp_d, thickness, np.abs(res)), imag)
     plt.scatter(c_(real), c_(imag), c=colors_interp, edgecolor='none', s=s, rasterized=True)
+    if arrows:
+      #print(f"{np.nanmin(c_(real))=}; {plt.xlim()[0]=}")
+      if np.nanmin(c_(real)) < plt.xlim()[0]:
+        #print("Out of bounds")
+        idx = np.nanargmin(np.abs(c_(real)-plt.xlim()[0])) + 4
+      else:
+        idx = 0
+      
+      stop = np.array([[c_(real)[idx], c_(imag)[idx]]])
+      length = 0.003
+      color = colors_interp[idx]
+      shaft_angle = np.arctan2((imag[idx+1]-imag[idx])/a, (real[idx+1]-real[idx])*a)
+
+      hat = stop + length*np.array([
+        [np.cos(shaft_angle+add_arrow_angle)/a, np.sin(shaft_angle+add_arrow_angle)*a], 
+        [0,0], 
+        [np.cos(shaft_angle-add_arrow_angle)/a, np.sin(shaft_angle-add_arrow_angle)*a]
+      ])
+      
+
+      plt.plot(*hat.T, color=color, zorder=-1)
 
   if labels:
     plt.ylabel(f"$\Im\{{{q_}\}}$ [{u_}]")
@@ -353,8 +378,14 @@ if __name__ == "__main__":
         figsize=(90*mm,60*mm),  
         width_ratios=[1,0.03,0.03],
         height_ratios=[1, 0.6], constrained_layout=True
-        )
-    pcm, cmap, norm = plot_trajectories(3, 1, 1, domain, unit=unit, plot_neg_eps_r=True, axs=axss[:,0], plot_domain=[1-0.06j, 2.5], upsample=4, cbar=False)
+    )
+    
+    pcm, cmap, norm = plot_trajectories(
+      3, 1, 1, domain, unit=unit, 
+      plot_neg_eps_r=True, axs=axss[:,0], plot_domain=[1.5-0.06j, 2.1], 
+      upsample=10, cbar=False, arrows=True
+    )
+
     plt.xlim(1.5, 2.1)
     mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
     cb = plt.colorbar(mappable, cax=axss[0, 1], label=f"$d$ [{um}]")
@@ -366,12 +397,13 @@ if __name__ == "__main__":
     axss[1,2].axis("off")
     plt.savefig("out/ThreePole.pdf", dpi=1200)
 
-    # # %%
-    # large_domain = [0.7-0.7j, 5.0+0.05j]
-    # plt.figure()
-    # plot_trajectories(1, 1, 1, large_domain, unit=unit, plot_neg_eps_r=True, fig_width=90*mm, fig_height=50*mm, cbar=False)
-    # plt.xlim(1.5, 2.1)
-    # plt.savefig("out/zero_stop.pdf")
+    # %%
+    large_domain = [0.7-0.7j, 5.0+0.05j]
+    plt.figure()
+    plot_trajectories(1, 1, 1, large_domain, unit=unit, plot_neg_eps_r=True, 
+                      fig_width=90*mm, fig_height=50*mm, cbar=False, arrows=True)
+    plt.xlim(1.5, 2.1)
+    plt.savefig("out/zero_stop.pdf")
 
     # %%
     # %matplotlib widget
@@ -404,7 +436,8 @@ if __name__ == "__main__":
           unit=unit, axs=axs, cbar=False, labels=False, d_limit=0.4, 
           upsample=10, label_suffix = suffix,
           thickness_color_norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax),
-          eps_background=False, linewidth_modes=[1]
+          eps_background=False, linewidth_modes=[1], arrows=True, 
+          add_arrow_angle=np.pi/16 if osc==1 else np.pi/10
       )
       suffix += 1
       axs[0].set_title(rf"$\eta = \num{{{osc:.3f}}}$")

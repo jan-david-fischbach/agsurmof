@@ -10,6 +10,7 @@ uv sync
 ```
 
 ## Generating Plots
+This should typically be done after locating the pole trajectories. However, the corresponding data is provided with this repo, which allows you to directly regenerate the Figures of the main text.
 
 If you'd like to plot **Figure 1** run
 ```
@@ -36,7 +37,7 @@ For **Figure 6** run
 uv run qnmsc/plot_splitting.py
 ```
 
-## Generating the Data
+## Generating the Pole-Data
 
 To generate the data for Figures 1,2,3 and 4 run
 ```
