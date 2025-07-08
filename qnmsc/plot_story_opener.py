@@ -60,6 +60,7 @@ def plot_comic(modenumber, npoles, scale_osc, scale_damping, domain, xlim=None, 
 
     om_os.append(om_o + corr)
   
+  om_os = np.array(om_os)
   plt.plot(thickness, selected.real, color="k")
 
   idx_last = np.argmin(np.abs(thickness - xlim[1]))
@@ -119,7 +120,7 @@ plot_comic(2, 3, scale_osc, scale_damping, domain, xlim=xlim, ylim=ylim)
 
 npol = [0,1,3]
 for i in range(3):
-  plot_cartoon(axs[i, 0], f"assets/cavity_{i+1}.png")
+  plot_cartoon(axs[i, 0], f"assets/cavity-{i+1}.png")
 
   plt.sca(axs[i, 1])
   eps = eps_surmof(
