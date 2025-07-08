@@ -184,11 +184,41 @@ def size(res, imag):
   s = 1
   return s
 
+def add_arrow_head(real, imag, length, arrow_head_angle, colors_interp, ax=None):
+
+  if ax is None:
+    ax = plt.gca()
+  
+  fig = ax.get_figure()
+
+  bbox = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+  aspect_ratio = bbox.width / bbox.height
+  a = 1/np.sqrt(aspect_ratio)
+
+  if np.nanmin(real) < plt.xlim()[0]:
+    #print("Out of bounds")
+    idx = np.nanargmin(np.abs(real-plt.xlim()[0])) + 4
+  else:
+    idx = 0
+  
+  stop = np.array([[real[idx], imag[idx]]])
+  color = colors_interp[idx]
+  shaft_angle = np.arctan2((imag[idx+1]-imag[idx])/a, (real[idx+1]-real[idx])*a)
+
+  hat = stop + length*np.array([
+    [np.cos(shaft_angle+arrow_head_angle)/a, np.sin(shaft_angle+arrow_head_angle)*a], 
+    [0,0], 
+    [np.cos(shaft_angle-arrow_head_angle)/a, np.sin(shaft_angle-arrow_head_angle)*a]
+  ])
+  
+  ax.plot(*hat.T, color=color, zorder=-1)
+
 def plot_trajectories(npoles, scale_osc, scale_damping, domain, 
   plot_domain = [1-0.06j, 2.5+0.01j], fig_width = 90*mm, fig_height = 80*mm,
   unit = "eV", axs=None, cbar=True, labels=True, plot_neg_eps_r=False, d_limit=np.inf, 
   color_thickness=False, num_modes = 4, upsample=10, label_suffix="", 
-  thickness_color_norm=None, eps_background=True, linewidth_modes=[], arrows=False, add_arrow_angle=np.pi/16
+  thickness_color_norm=None, eps_background=True, linewidth_modes=[], 
+  arrows=False, arrow_head_angle=np.pi/16, arrow_head_length=0.003, 
   ):
 
   c_ = unit_conversion[unit]
@@ -245,11 +275,11 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
   mew =0.5
   plt.scatter(
     poles.real, poles.imag, 
-    marker="x", color="k", linewidths=mew
+    marker="x", color="k", linewidths=mew, zorder=10
   )
   plt.scatter(
     zeros.real, zeros.imag, 
-    facecolors='none', edgecolors="k", linewidths=mew
+    facecolors='none', edgecolors="k", linewidths=mew, zorder=10
   )
 
   # Interpolate thicknesses to make plot smoother
@@ -259,36 +289,15 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
     thickness_color_norm = mpl.colors.Normalize(vmin=min(interp_d), vmax=max(interp_d))
   colors_interp = cmap(thickness_color_norm(interp_d))
 
-  bbox = plt.gca().get_window_extent().transformed(fig.dpi_scale_trans.inverted())
-  aspect_ratio = bbox.width / bbox.height
-  a = 1/np.sqrt(aspect_ratio)
   # Plot Trajectories
   for i, (pole, res) in enumerate(zip(poles_tracked.T, residues_tracked.T)):
     real = np.interp(interp_d, thickness, pole.real)
     imag = np.interp(interp_d, thickness, pole.imag)
     s = size(np.interp(interp_d, thickness, np.abs(res)), imag)
     plt.scatter(c_(real), c_(imag), c=colors_interp, edgecolor='none', s=s, rasterized=True)
-    if arrows:
-      #print(f"{np.nanmin(c_(real))=}; {plt.xlim()[0]=}")
-      if np.nanmin(c_(real)) < plt.xlim()[0]:
-        #print("Out of bounds")
-        idx = np.nanargmin(np.abs(c_(real)-plt.xlim()[0])) + 4
-      else:
-        idx = 0
-      
-      stop = np.array([[c_(real)[idx], c_(imag)[idx]]])
-      length = 0.003
-      color = colors_interp[idx]
-      shaft_angle = np.arctan2((imag[idx+1]-imag[idx])/a, (real[idx+1]-real[idx])*a)
-
-      hat = stop + length*np.array([
-        [np.cos(shaft_angle+add_arrow_angle)/a, np.sin(shaft_angle+add_arrow_angle)*a], 
-        [0,0], 
-        [np.cos(shaft_angle-add_arrow_angle)/a, np.sin(shaft_angle-add_arrow_angle)*a]
-      ])
-      
-
-      plt.plot(*hat.T, color=color, zorder=-1)
+    print(np.nanmax(np.abs(res)))
+    if arrows and np.nanmax(np.abs(res))>5e-3:
+      add_arrow_head(c_(real), c_(imag), arrow_head_length, arrow_head_angle, colors_interp)
 
   if labels:
     plt.ylabel(f"$\Im\{{{q_}\}}$ [{u_}]")
@@ -373,37 +382,37 @@ if __name__ == "__main__":
     # plt.savefig("out/SinglePole.pdf", dpi=1200)
 
     # # %%
-    fig, axss = plt.subplots(
-        2, 3, sharex="col",
-        figsize=(90*mm,60*mm),  
-        width_ratios=[1,0.03,0.03],
-        height_ratios=[1, 0.6], constrained_layout=True
-    )
+    # fig, axss = plt.subplots(
+    #     2, 3, sharex="col",
+    #     figsize=(90*mm,60*mm),  
+    #     width_ratios=[1,0.03,0.03],
+    #     height_ratios=[1, 0.6], constrained_layout=True
+    # )
     
-    pcm, cmap, norm = plot_trajectories(
-      3, 1, 1, domain, unit=unit, 
-      plot_neg_eps_r=True, axs=axss[:,0], plot_domain=[1.5-0.06j, 2.1], 
-      upsample=10, cbar=False, arrows=True
-    )
+    # pcm, cmap, norm = plot_trajectories(
+    #   3, 1, 1, domain, unit=unit, 
+    #   plot_neg_eps_r=True, axs=axss[:,0], plot_domain=[1.5-0.06j, 2.1], 
+    #   upsample=10, cbar=False, arrows=True
+    # )
 
-    plt.xlim(1.5, 2.1)
-    mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
-    cb = plt.colorbar(mappable, cax=axss[0, 1], label=f"$d$ [{um}]")
+    # plt.xlim(1.5, 2.1)
+    # mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
+    # cb = plt.colorbar(mappable, cax=axss[0, 1], label=f"$d$ [{um}]")
 
-    cb = plt.colorbar(pcm, cax=axss[0, 2], label="$\Re\{\\varepsilon_\mathrm{r}\}$", ticks=[-1e3, -1, 0, 1, 1e3])
-    cb.set_ticklabels(["-$10^3$", -1, 0, 1, "$10^3$"])
+    # cb = plt.colorbar(pcm, cax=axss[0, 2], label="$\Re\{\\varepsilon_\mathrm{r}\}$", ticks=[-1e3, -1, 0, 1, 1e3])
+    # cb.set_ticklabels(["-$10^3$", -1, 0, 1, "$10^3$"])
 
-    axss[1,1].axis("off")
-    axss[1,2].axis("off")
-    plt.savefig("out/ThreePole.pdf", dpi=1200)
+    # axss[1,1].axis("off")
+    # axss[1,2].axis("off")
+    # plt.savefig("out/ThreePole.pdf", dpi=1200)
 
-    # %%
-    large_domain = [0.7-0.7j, 5.0+0.05j]
-    plt.figure()
-    plot_trajectories(1, 1, 1, large_domain, unit=unit, plot_neg_eps_r=True, 
-                      fig_width=90*mm, fig_height=50*mm, cbar=False, arrows=True)
-    plt.xlim(1.5, 2.1)
-    plt.savefig("out/zero_stop.pdf")
+    # # %%
+    # large_domain = [0.7-0.7j, 5.0+0.05j]
+    # plt.figure()
+    # plot_trajectories(1, 1, 1, large_domain, unit=unit, plot_neg_eps_r=True, 
+    #                   fig_width=90*mm, fig_height=50*mm, cbar=False, arrows=True)
+    # plt.xlim(1.5, 2.1)
+    # plt.savefig("out/zero_stop.pdf")
 
     # %%
     # %matplotlib widget
@@ -414,7 +423,6 @@ if __name__ == "__main__":
 
     thickness_color_ranges = [[0.19, 0.235], [0,0.4]]
     thresh = 1
-    
 
     fig, axss = plt.subplots(
         2, len(oscs)+3, sharex="col",
@@ -427,6 +435,7 @@ if __name__ == "__main__":
     suffix = 1
 
     norms = []
+    #oscs = np.array(oscs)#[-2:]
     for osc, axs in list(zip(oscs[::-1], axss.T[np.array([0,1,2,5])])):
 
       vmin, vmax = thickness_color_ranges[osc >= thresh]
@@ -437,14 +446,15 @@ if __name__ == "__main__":
           upsample=10, label_suffix = suffix,
           thickness_color_norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax),
           eps_background=False, linewidth_modes=[1], arrows=True, 
-          add_arrow_angle=np.pi/16 if osc==1 else np.pi/10
+          arrow_head_angle=np.pi/16 if osc==1 else np.pi/10
       )
       suffix += 1
       axs[0].set_title(rf"$\eta = \num{{{osc:.3f}}}$")
       norms.append(norm)
 
+    ## plot inset 1
     axins = axss[1,1].inset_axes(
-      [0.55, 0.09, 0.4, 0.34],
+      [0.55, 0.09, 0.4, 0.32],
       xlim=(1.73, 1.74),
       ylim=(0.205, 0.23),
       xticklabels=[], yticklabels=[]
@@ -461,16 +471,68 @@ if __name__ == "__main__":
     poles_tracked = poles_tracked.T[selection]
     axins.plot(poles_tracked.real.T, thickness, color="#96a8b4")
     axins.tick_params(axis='y', which='minor', left=False, right=False)
-
+    
     # Draw the indicator or zoom lines.
     axss[1,1].indicate_inset_zoom(axins, edgecolor="black")
   
-    # cb = plt.colorbar(pcm,
-    #   label="$\Re\{\\varepsilon_\mathrm{r}\}$", 
-    #   ticks=[-1e3, -1, 0, 1, 1e3], cax=axss[0, -1]
-    # )
-    # cb.set_ticklabels(["-$10^3$", -1, 0, 1, "$10^3$"])
+    ## plot inset 2
+    axins = axss[0,0].inset_axes(
+      [0.6, 0.45, 0.55, 0.33],
+      xlim=(1.705, 1.713),
+      ylim=(-0.0115, -0.0108),
+      xticklabels=[], yticklabels=[]
+    )
+    axss[0,0].set_zorder(5)
+    axins.set_zorder(6)
 
+    npoles = 1
+    scale_osc = 0.025
+    scale_damping = 1
+    poles, residues, thickness, material_poles = load_data(
+      npoles, scale_osc, scale_damping, domain
+    )
+    poles_tracked, residues_tracked = track_qnms(poles, residues)
+    mask = thickness < 10 #0.4
+    poles_tracked = poles_tracked[mask]
+    residues_tracked = residues_tracked[mask]
+    thickness = thickness[mask]
+
+    interp_d = np.linspace(min(thickness), max(thickness), (len(thickness)-1)*10+1) [::-1]
+    cmap = mpl.cm.viridis_r
+    thickness_color_norm = norms[0]
+    colors_interp = cmap(thickness_color_norm(interp_d))
+
+    for i, (pole, res) in enumerate(zip(poles_tracked.T, residues_tracked.T)):
+      real = np.interp(interp_d, thickness, pole.real)
+      imag = np.interp(interp_d, thickness, pole.imag)
+
+      axins.scatter(real, imag, edgecolor='none', s=1, c=colors_interp, rasterized=True)
+      add_arrow_head(real, imag, 0.0001, np.pi/16, colors_interp, ax = axins)
+
+    e_r = np.linspace(1.7, 1.72, 51)
+    e_i = np.linspace(-0.013, -0.009, 31)
+    E_r, E_i = np.meshgrid(e_r, e_i)
+    E = E_r +1j*E_i
+    
+    eps = eps_surmof(E, npoles, scale_osc, scale_damping)
+    ds = 1
+    _, _, _, poles = diffaaable.aaa(E[::ds, ::ds], eps[::ds, ::ds], tol=1e-8)
+    _, _, _, zeros = diffaaable.aaa(E[::ds, ::ds], 1/eps[::ds, ::ds], tol=1e-8)
+
+    mew = 0.5
+    axins.scatter(
+      poles.real, poles.imag, 
+      marker="x", color="k", linewidths=mew
+    )
+    axins.scatter(
+      zeros.real, zeros.imag, 
+      facecolors='none', edgecolors="k", linewidths=mew
+    )
+
+    # Draw the indicator or zoom lines.
+    axss[0,0].indicate_inset_zoom(axins, edgecolor="black")
+
+    ## colorbars etc.
     if len(norms) < 4:
       norms = [norms[0]]*4
     axss[1,0].set_ylim(0, 0.4)
