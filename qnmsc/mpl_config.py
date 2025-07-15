@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from matplotlib.collections import PatchCollection
 
 def config():
     colorcycle = plt.rcParams['axes.prop_cycle']
@@ -25,6 +26,29 @@ inv_um = r"\unit{\per \micro \meter}"
 # um = r"$\upmu$ m"
 
 mm = 0.1/2.54
+
+# define an object that will be used by the legend
+class MulticolorPatch(object):
+    def __init__(self, colors):
+        self.colors = colors
+        
+# define a handler for the MulticolorPatch object
+class MulticolorPatchHandler(object):
+    def legend_artist(self, legend, orig_handle, fontsize, handlebox):
+        width, height = handlebox.width, handlebox.height
+        patches = []
+        for i, c in enumerate(orig_handle.colors):
+            patches.append(plt.Rectangle([width/len(orig_handle.colors) * i - handlebox.xdescent, 
+                                          -handlebox.ydescent],
+                           width / len(orig_handle.colors),
+                           height*0.7, 
+                           facecolor=c, 
+                           edgecolor='none'))
+
+        patch = PatchCollection(patches,match_original=True)
+
+        handlebox.add_artist(patch)
+        return patch
 
 if __name__ == "__main__":
     config()

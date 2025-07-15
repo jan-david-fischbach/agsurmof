@@ -9,7 +9,7 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.16.7
 #   kernelspec:
-#     display_name: .venv
+#     display_name: qnmsc
 #     language: python
 #     name: python3
 # ---
@@ -44,7 +44,7 @@ def load_data(pol=0, l=1, mode=1, prefix="SURMOF_SILVER", suffix='fixedthickness
   pol_str = pols[pol]
   l_str = l_strings[l]
 
-  folder = "assets/in/3poles_surmof_20nmAu/"
+  folder = "assets/in/1pole_core_shell/"
   return scipy.io.loadmat(f"{folder}/{prefix}_{pol_str}_particle_{l_str}_mode{mode}_{suffix}.mat", struct_as_record=False)
 
 
@@ -76,55 +76,6 @@ my_cmap = ListedColormap(my_cmap)
 # %%
 radius_outer = background_data['radiusf']
 k0 = 2*np.pi/background_data['lam']
-
-R, K = np.meshgrid(radius_outer[1], k0)
-plt.pcolormesh(1/R/1e6, K/1e6, background_data['exblk'], zorder=-2, rasterized=True, shading='gouraud', cmap=my_cmap)
-cbar = plt.colorbar(label="Extinction XSection")
-cbar.ax.tick_params(which='both', color="white")
-
-for pol in [0,1]:
-  for l in [1,2]:
-    for mode in range(1, 10):
-      plot_trajectory(pol, l, mode, color=colors[pol], lw=0.6, ls='-' if l == 1 else '--')
-
-plt.plot([], [], color=colors[0], label=pols[0])
-plt.plot([], [], color=colors[1], label=pols[1])
-plt.plot([], [], color="white", ls="-",  label="dipole")
-plt.plot([], [], color="white", ls="--", label="quadrupole")
-
-plt.legend(labelcolor="white", loc="lower right")
-plt.xlabel(rf'$1/r_\mathrm{{outer}}$ [{inv_um}]')
-plt.ylabel(rf'$k_0$ [$2\pi$ {inv_um}]')
-
-plt.xlim(3, 14)
-plt.ylim(7, 11)
-plt.tick_params(which='both', color="white")
-
-# %%
-cmap = plt.cm.viridis
-for osc_strength in [0.1, 0.25, 0.5, 1]:
-  o = str(osc_strength).replace('.', 'p')
-  if osc_strength == 1:
-    o = ''
-  suffix = f"onepole{o}_fixedthickness20nm"
-  color = cmap(osc_strength-1e-3)
-  for pol in [1]:
-    for l in [1,2]:
-      for mode in range(1, 10):
-
-        plot_trajectory(pol, l, mode, suffix=suffix, color=color)
-    
-  plt.plot([], [], color=color, label=f"{osc_strength:.2f}")
-
-
-plt.xlabel(rf'$1/r_\mathrm{{outer}}$ [{inv_um}]')
-plt.ylabel(rf'$k_0$ [$2\pi$ {inv_um}]')
-
-plt.xlim(2.7, 14)
-plt.ylim(7.5, 10)
-
-plt.legend(title="Oscillator Strength")
-
 
 # %%
 def plot_cplx_trajectory(pol=0, l=1, mode=1, prefix="SURMOF_SILVER", suffix='fixedthickness20nm', **kwargs):
@@ -207,7 +158,7 @@ def planar_analogous(osc_strength, axs, plot_domain = [1.25-0.6j, 2.25+0.05j], c
   E_r, E_i = np.meshgrid(e_r, e_i)
   E = E_r +1j*E_i
 
-  eps = eps_surmof(E, 1, osc_strength**2, 1)
+  eps = eps_surmof(E, 1, osc_strength, 1)
   ds = 1
   _, _, _, poles = diffaaable.aaa(E[::ds, ::ds], eps[::ds, ::ds])
   _, _, _, zeros = diffaaable.aaa(E[::ds, ::ds], 1/eps[::ds, ::ds])
@@ -275,11 +226,15 @@ def planar_analogous(osc_strength, axs, plot_domain = [1.25-0.6j, 2.25+0.05j], c
   return mappable
 
 # %%
+default=['C0', 'C1', 'C2', 'C3', 'C4', 'C5']
 mode_to_color = { # 'C2' is the passing (weakly coupled) mode
-  1:   ['C1', 'C3', 'C0', 'C0', 'C2'],
-  0.5: ['C0', 'C1', 'C0', 'C2'],
-  0.25: ['C2', 'C0', 'C0', 'C1', 'C3'],
-  0.1: ['C0', 'C0', 'C2', 'C1']
+  1:    ['C1', 'C3', 'C0', 'C0', 'C2'],
+  0.5:  default,
+  0.25: default,
+  0.1:  default,
+  0.05: ['C0', 'C0', 'C1', 'C2', 'C3'],
+  0.025:['C2', 'C0', 'C0', 'C1'],
+  0.01: ['C0', 'C0', 'C2', 'C1']
 }
 
 # %%
@@ -295,17 +250,17 @@ fig, axs = plt.subplots(3, 5, sharey="row", figsize=(180*mm,70*mm), sharex='col'
 # plot_domain2 = [[1.6-0.1199j, 1.85+0.02j], [1.6-0.53j, 1.85-0.4801j]]
 # plot_domain1 = [[1.3-0.1199j, 2.2 +0.02j], [1.3-0.53j, 2.2-0.4801j]]
 
-plot_domain2 = [[1.6-0.1199j, 1.85], [1.6-0.53j, 1.85-0.4801j]]
+plot_domain2 = [[1.65-0.1199j, 1.78], [1.65-0.53j, 1.78-0.4801j]]
 plot_domain1 = [[1.3-0.1199j, 2.2 ], [1.3-0.53j, 2.2-0.4801j]]
 
-for i, osc_strength in enumerate([0.1, 0.25, 0.5, 1]):
+for i, osc_strength in enumerate([0.01, 0.025, 0.05, 1]):
   plot_domain = plot_domain1 if osc_strength == 1 else plot_domain2
   mappable = planar_analogous(
     osc_strength, axs = axs[:, i], 
     colors = mode_to_color[osc_strength], label_suffix=f"{i+1}",
     plot_domain=plot_domain
   )
-  axs[0, i].set_title(f"$\eta$ = {osc_strength**2:.3f}")
+  axs[0, i].set_title(f"$\eta$ = {osc_strength:.3f}")
 
 cbar_ax = axs[0, -1]
 cbar = plt.colorbar(ax=cbar_ax, mappable=mappable, fraction=1, label=rf'$r_\mathrm{{outer}}$ [{um}]')
@@ -353,3 +308,5 @@ for axs in axs.T[:-1]:
 
 
 plt.savefig('out/CoreShell.pdf', dpi=1200, bbox_inches='tight')
+
+# %%
