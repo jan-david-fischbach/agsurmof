@@ -117,7 +117,7 @@ if __name__ == "__main__":
 
     plt.plot(hbar_omega.real, eps_ag_s.real, label='Real part (Ag Sergei)')
     plt.plot(hbar_omega.real, eps_ag_s.imag, label='Imaginary part (Ag Sergei)')
-    plt.xlabel('hbar omega (eV)')
+    plt.xlabel('$\hbar omega$ [eV]')
     plt.ylabel('Relative Permittivity')
     plt.legend()
     plt.savefig("out/eps_compare.png")
