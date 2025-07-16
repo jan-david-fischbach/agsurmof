@@ -85,7 +85,7 @@ unit_str = {
 }
 
 qty_str = {
-  "eV": "\hbar \hat \omega",
+  "eV": r"\hbar \tilde \omega",
   "THz": "f",
 }
 
@@ -99,7 +99,7 @@ def label_tracked_qnms(poles_tracked, thickness):
       plt.annotate(f"p{i}", (thickness[filter][0],ptf[filter].real[0]), fontsize=5)
       plt.annotate(f"p{i}", (thickness[filter][-1],ptf[filter].real[-1]),fontsize=5)
   plt.xlabel(f"$d$ [{um}]")
-  plt.ylabel("$\hbar \hat \omega$ [eV]")
+  plt.ylabel(r"$\hbar \tilde \omega$ [eV]")
   
 def select_modes(npoles, scale_osc, scale_damping, domain, modenumber=1, force=False):
   fname = filename(npoles, scale_osc, scale_damping, domain)
@@ -381,30 +381,30 @@ if __name__ == "__main__":
     # plot_trajectories(1, 1, 1, domain, unit=unit, fig_width=90*mm, fig_height=50*mm)
     # plt.savefig("out/SinglePole.pdf", dpi=1200)
 
-    # # %%
-    # fig, axss = plt.subplots(
-    #     2, 3, sharex="col",
-    #     figsize=(90*mm,60*mm),  
-    #     width_ratios=[1,0.03,0.03],
-    #     height_ratios=[1, 0.6], constrained_layout=True
-    # )
+    # %%
+    fig, axss = plt.subplots(
+        2, 3, sharex="col",
+        figsize=(90*mm,60*mm),  
+        width_ratios=[1,0.03,0.03],
+        height_ratios=[1, 0.6], constrained_layout=True
+    )
     
-    # pcm, cmap, norm = plot_trajectories(
-    #   3, 1, 1, domain, unit=unit, 
-    #   plot_neg_eps_r=True, axs=axss[:,0], plot_domain=[1.5-0.06j, 2.1], 
-    #   upsample=10, cbar=False, arrows=True
-    # )
+    pcm, cmap, norm = plot_trajectories(
+      3, 1, 1, domain, unit=unit, 
+      plot_neg_eps_r=True, axs=axss[:,0], plot_domain=[1.5-0.06j, 2.1], 
+      upsample=10, cbar=False, arrows=True
+    )
 
-    # plt.xlim(1.5, 2.1)
-    # mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
-    # cb = plt.colorbar(mappable, cax=axss[0, 1], label=f"$d$ [{um}]")
+    plt.xlim(1.5, 2.1)
+    mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
+    cb = plt.colorbar(mappable, cax=axss[0, 1], label=f"$d$ [{um}]")
 
-    # cb = plt.colorbar(pcm, cax=axss[0, 2], label="$\Re\{\\varepsilon_\mathrm{r}\}$", ticks=[-1e3, -1, 0, 1, 1e3])
-    # cb.set_ticklabels(["-$10^3$", -1, 0, 1, "$10^3$"])
+    cb = plt.colorbar(pcm, cax=axss[0, 2], label="$\Re\{\\varepsilon_\mathrm{r}\}$", ticks=[-1e3, -1, 0, 1, 1e3])
+    cb.set_ticklabels(["-$10^3$", -1, 0, 1, "$10^3$"])
 
-    # axss[1,1].axis("off")
-    # axss[1,2].axis("off")
-    # plt.savefig("out/ThreePole.pdf", dpi=1200)
+    axss[1,1].axis("off")
+    axss[1,2].axis("off")
+    plt.savefig("out/ThreePole.pdf", dpi=1200)
 
     # # %%
     # large_domain = [0.7-0.7j, 5.0+0.05j]

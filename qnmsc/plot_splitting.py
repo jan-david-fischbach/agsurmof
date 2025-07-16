@@ -45,8 +45,7 @@ def plot_splitting(
   plot_dots     = True,
   plot_cavity_mode = True,
   plot_extracted_coupling = True,
-  scatter_numerical = False,
-  fill_legend=True
+  scatter_numerical = False
   ):
 
   ls_higher = '--' if c_higher == "white" else '-'
@@ -73,8 +72,8 @@ def plot_splitting(
   def populate_legend():
     
     if plot_cavity_mode:
-      plt.plot([], [], ls='dashdot', color=c_fundamental, label="$\hat \omega_\mathrm{c}$", lw=lw_optical*0.5, zorder=7)
-      plt.plot([], [], "-", color=c_fundamental, label="$\hat \omega_\mathrm{c} + \sum_j \mathrm{i} V_{j}$", lw=lw_optical, zorder=7)
+      plt.plot([], [], ls='dashdot', color=c_fundamental, label=r"$\tilde \omega_\mathrm{c}$", lw=lw_optical*0.5, zorder=7)
+      plt.plot([], [], "-", color=c_fundamental, label=r"$\tilde \omega_\mathrm{c} + \sum_j \mathrm{i} V_{j}$", lw=lw_optical, zorder=7)
 
     plt.plot([],[], color=c_fundamental, label="fundamental QNMs")
     plt.plot([],[], ls_higher, color=c_higher, linewidth=lw_higher, label="higher order QNMs")
@@ -94,18 +93,23 @@ def plot_splitting(
     if force_legend:
       populate_legend()
 
-  f_mode = selected.real
-  if scatter_numerical:
-    plt.plot(param, f_mode, mec=c_fundamental, marker="o", mfc="none", ls="none", ms=2, zorder=6)
-  else:
-    plt.plot(param, f_mode, color=c_fundamental)
-
+  param_interp = np.linspace(min(param), max(param), n_interp)
+  for fund_mode in selected.real.T:
+    if scatter_numerical:
+      sorter = np.argsort(param)
+      fund_mode_interp = np.interp(param_interp, param[sorter], fund_mode[sorter])
+      # print(f"{fund_mode_interp=}")
+      # print(f"{fund_mode=}")
+      # print(f"{param=}")
+      plt.plot(param_interp, fund_mode_interp, mec=c_fundamental, marker="o", mfc="none", ls="none", ms=2, zorder=6)
+    else:
+      plt.plot(param, fund_mode, color=c_fundamental)
+  fund_mode = selected.real
 
   Cs=[]
   om_os=[]
   evs_fit = []
 
-  param_interp = np.linspace(min(param), max(param), n_interp)
   for i, p in enumerate(param_interp):
       interp_d = 1/p if inv_d else p
       evs = []
@@ -141,10 +145,10 @@ def plot_splitting(
 
   if color_rabi != 'none':
     plt.vlines(
-      [rabi_param],*f_mode[rabi_idx, [0, -1]], color=color_rabi,
+      [rabi_param],*fund_mode[rabi_idx, [0, -1]], color=color_rabi,
       zorder=6
     )
-  plt.ylabel("$\Re\{\hbar \hat \omega\}$ [eV]")
+  plt.ylabel(r"$\Re\{\hbar \tilde \omega\}$ [eV]")
   plt.legend(fontsize=5, labelcolor=c_font, loc=legend_loc)
 
   for i,mat_pole in enumerate(material_poles):
@@ -164,12 +168,10 @@ def plot_splitting(
     for i,coupling in enumerate(cs.T):
         plt.plot(param_interp, coupling, ".-" if plot_dots else "-", color=c_mat[i], label=f"$p_{i+1}=\complexqty{{{material_poles[i]:.3f}}}{{eV}}$")
 
-  gamma_avg = -np.sum(np.array(evs_fit), axis=-1).imag/(npoles+1) 
-  gamma_avg[np.isnan(Cs[:,0])] = np.nan
+    gamma_avg = -np.sum(np.array(evs_fit), axis=-1).imag/(npoles+1) 
+    gamma_avg[np.isnan(Cs[:,0])] = np.nan
 
-  gamma_avg_res = np.interp(rabi_param, param_interp, gamma_avg)
-
-  plt.plot(param_interp, gamma_avg, color="k", label=f"$\gamma_\mathrm{{avg}}$")# = {gamma_avg_res:.3f}$ eV @ $\delta = 0$")
+    plt.plot(param_interp, gamma_avg, color="k", label=f"$\gamma_\mathrm{{avg}}$")# = {gamma_avg_res:.3f}$ eV @ $\delta = 0$")
   
   stud = 0.1 if inv_d else 0.02
   x = [rabi_param-stud,rabi_param+stud]

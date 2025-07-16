@@ -270,12 +270,12 @@ cbar = plt.colorbar(ax=cbar_ax, mappable=mappable, fraction=1, label=rf'$r_\math
 
 # axs[0, 0].set_title(f"$\eta$: {list(mode_to_color.keys())[-1]**2:.2f}")
 
-axs[0, 0].set_ylabel("$\Im\{\hbar \hat \omega\}$ [eV]")
+axs[0, 0].set_ylabel(r"$\Im\{\hbar \tilde \omega\}$ [eV]")
 axs[0, 0].yaxis.label.set_position((-0.2, 0.25))
 
 axs[2, 0].set_ylabel(rf'$r_\mathrm{{outer}}$ [{um}]')
 
-fig.supxlabel(r'$\Re\{\hbar \hat \omega\}$ [eV]')
+fig.supxlabel(r'$\Re\{\hbar \tilde \omega\}$ [eV]')
 fig.align_ylabels()
 
 axs[2, 0].set_ylim(0.07, 0.37)
