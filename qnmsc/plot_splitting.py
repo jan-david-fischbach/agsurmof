@@ -78,7 +78,7 @@ def plot_splitting(
 
     plt.plot([],[], color=c_fundamental, label="fundamental QNMs")
     plt.plot([],[], ls_higher, color=c_higher, linewidth=lw_higher, label="higher order QNMs")
-    plt.plot([],[], color=color_rabi, label=f"$\Omega_\mathrm{{split}}=2\cdot{f_rabi.real/2:.3f}[\mathrm{{eV}}]$")
+    plt.plot([],[], color=color_rabi, label=f"$\omega_\mathrm{{split}}=2\cdot{f_rabi.real/2:.3f}[\mathrm{{eV}}]$")
     if plot_dots:
       plt.plot([],[], color=c_fit, linestyle="none", marker=".", label="coupling fit")
 
