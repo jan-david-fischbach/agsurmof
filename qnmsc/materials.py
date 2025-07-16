@@ -100,6 +100,9 @@ def eps_ag_sergei(hbar_omega):
 
     return epsilon_hat - omega_plas**2/(omega**2+1j*gamma*omega)
 
+def eps_ag(hbar_omega):
+    return eps_ag_sergei(hbar_omega)
+
 if __name__ == "__main__":
     # Testing the eps_surmof function
     import matplotlib.pyplot as plt
