@@ -29,9 +29,11 @@ import matplotlib.ticker as ticker
 import scipy.io
 from qnmsc.mpl_config import um, inv_um, mm
 from qnmsc.materials import eps_surmof, to_eV
-from qnmsc.plot_trajectories import calc_material_poles
+from qnmsc.plot_trajectories import calc_material_poles, add_arrow_head
 
 import diffaaable
+from matplotlib.colors import ListedColormap
+from scipy.constants import h, c as c0,e
 
 import qnmsc.mpl_config
 qnmsc.mpl_config.config()
@@ -67,7 +69,6 @@ def plot_trajectory(pol=0, l=1, mode=1, prefix="SURMOF_SILVER", suffix='fixedthi
 background_data = scipy.io.loadmat("assets/in/3poles_surmof_20nmAu/Data_Material1SURMOF_Material2SILVERSCS_ABS_maps_SURMOF_SILVER_upquadrupole_fixedlayer20nm_allpoles.mat", struct_as_record=False)
 
 # %%
-from matplotlib.colors import ListedColormap
 a = 0.6
 my_cmap = plt.cm.viridis(np.arange(plt.cm.viridis.N))
 my_cmap[:,0:3] *= a 
@@ -94,8 +95,6 @@ def plot_cplx_trajectory(pol=0, l=1, mode=1, prefix="SURMOF_SILVER", suffix='fix
 
 # %%
 r_outer_lims = [0.07, 0.37]
-
-from scipy.constants import h, c as c0,e
 k0_to_eV = 1e6*h*c0/e/(2*np.pi)
 
 def plot_single_gradient_trajectory(pol=0, l=1, mode=1, 
@@ -127,6 +126,12 @@ def plot_single_gradient_trajectory(pol=0, l=1, mode=1,
     #s=s, 
     s=2,
     rasterized=True)
+  
+  scale = np.ptp(plt.xlim())
+  scaley = np.ptp(plt.ylim())
+  add_arrow_head(real[::-1] - 0.005*scale, imag[::-1], 0.01*np.sqrt(scale), np.pi/16/np.sqrt(scale)/np.sqrt(scaley)/2, colors[::-1])
+  
+
 
 
 def plot_real_trajectory(pol=0, l=1, mode=1, prefix="SURMOF_SILVER", suffix='fixedthickness20nm', **kwargs):
@@ -164,7 +169,7 @@ def planar_analogous(osc_strength, axs, plot_domain = [1.25-0.6j, 2.25+0.05j], c
   _, _, _, zeros = diffaaable.aaa(E[::ds, ::ds], 1/eps[::ds, ::ds])
 
   
-  interp_d = np.linspace(*r_outer_lims, 2001)
+  interp_d = np.linspace(*r_outer_lims, 8001)
 
   cmap = plt.cm.viridis_r
   thickness_color_norm = mpl.colors.Normalize(vmin=min(interp_d), vmax=max(interp_d))
@@ -180,8 +185,6 @@ def planar_analogous(osc_strength, axs, plot_domain = [1.25-0.6j, 2.25+0.05j], c
         for mode in range(1, 10):
           plot_single_gradient_trajectory(pol, l, mode, suffix=suffix, 
             interp_d=interp_d, colors=colors_interp)
-
-  
 
   ## Material Poles and Zeros
   plt.scatter(
@@ -267,12 +270,12 @@ cbar = plt.colorbar(ax=cbar_ax, mappable=mappable, fraction=1, label=rf'$r_\math
 
 # axs[0, 0].set_title(f"$\eta$: {list(mode_to_color.keys())[-1]**2:.2f}")
 
-axs[0, 0].set_ylabel("$\Im\{\hbar \omega\}$ [eV]")
+axs[0, 0].set_ylabel("$\Im\{\hbar \hat \omega\}$ [eV]")
 axs[0, 0].yaxis.label.set_position((-0.2, 0.25))
 
 axs[2, 0].set_ylabel(rf'$r_\mathrm{{outer}}$ [{um}]')
 
-fig.supxlabel(r'$\Re\{\hbar \omega\}$ [eV]')
+fig.supxlabel(r'$\Re\{\hbar \hat \omega\}$ [eV]')
 fig.align_ylabels()
 
 axs[2, 0].set_ylim(0.07, 0.37)

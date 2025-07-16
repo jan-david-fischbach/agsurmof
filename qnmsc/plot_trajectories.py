@@ -85,7 +85,7 @@ unit_str = {
 }
 
 qty_str = {
-  "eV": "\hbar \omega",
+  "eV": "\hbar \hat \omega",
   "THz": "f",
 }
 
@@ -99,7 +99,7 @@ def label_tracked_qnms(poles_tracked, thickness):
       plt.annotate(f"p{i}", (thickness[filter][0],ptf[filter].real[0]), fontsize=5)
       plt.annotate(f"p{i}", (thickness[filter][-1],ptf[filter].real[-1]),fontsize=5)
   plt.xlabel(f"$d$ [{um}]")
-  plt.ylabel("$\hbar \omega$ [eV]")
+  plt.ylabel("$\hbar \hat \omega$ [eV]")
   
 def select_modes(npoles, scale_osc, scale_damping, domain, modenumber=1, force=False):
   fname = filename(npoles, scale_osc, scale_damping, domain)

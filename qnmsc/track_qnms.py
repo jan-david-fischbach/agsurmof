@@ -161,8 +161,8 @@ def eyes(ts, all_poles, all_residues):
 
   plt.colorbar(mpl.cm.ScalarMappable(cmap=cmap, norm=norm), ax=plt.gca(), label="cavity thickness [$\mu m$]")
 
-  plt.xlabel("$\Re\{\hbar \omega\}$ [eV]")
-  plt.ylabel("$\Im\{\hbar \omega\}$ [eV]")
+  plt.xlabel("$\Re\{\hbar \hat \omega\}$ [eV]")
+  plt.ylabel("$\Im\{\hbar \hat \omega\}$ [eV]")
 
 
 # %%

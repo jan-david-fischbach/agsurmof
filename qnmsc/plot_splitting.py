@@ -73,8 +73,8 @@ def plot_splitting(
   def populate_legend():
     
     if plot_cavity_mode:
-      plt.plot([], [], ls='dashdot', color=c_fundamental, label="$\omega_\mathrm{c}$", lw=lw_optical*0.5, zorder=7)
-      plt.plot([], [], "-", color=c_fundamental, label="$\omega_\mathrm{c} + \sum_j \mathrm{i} V_{j}$", lw=lw_optical, zorder=7)
+      plt.plot([], [], ls='dashdot', color=c_fundamental, label="$\hat \omega_\mathrm{c}$", lw=lw_optical*0.5, zorder=7)
+      plt.plot([], [], "-", color=c_fundamental, label="$\hat \omega_\mathrm{c} + \sum_j \mathrm{i} V_{j}$", lw=lw_optical, zorder=7)
 
     plt.plot([],[], color=c_fundamental, label="fundamental QNMs")
     plt.plot([],[], ls_higher, color=c_higher, linewidth=lw_higher, label="higher order QNMs")
@@ -144,7 +144,7 @@ def plot_splitting(
       [rabi_param],*f_mode[rabi_idx, [0, -1]], color=color_rabi,
       zorder=6
     )
-  plt.ylabel("$\Re\{\hbar \omega\}$ [eV]")
+  plt.ylabel("$\Re\{\hbar \hat \omega\}$ [eV]")
   plt.legend(fontsize=5, labelcolor=c_font, loc=legend_loc)
 
   for i,mat_pole in enumerate(material_poles):
