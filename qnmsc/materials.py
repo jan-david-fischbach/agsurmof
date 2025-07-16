@@ -82,18 +82,23 @@ def eps_ag_sergei(hbar_omega):
         complex: relative permittivity
     """
     from scipy.constants import c as c0
-    omega = to_omega(hbar_omega)/(c0*1e6)
-    print(omega)
-
-    poles = [0, -0.219035578322267j]
-    residues = [9.055135084746365e+03j, -9.055135084746365e+03j]
+    omega = to_omega(hbar_omega)
+    
+    gamma = 0.219035578322267 * (c0*1e6)
+    res = 9.055135084746365e+03j *(c0*1e6)
+    omega_plas = np.sqrt(- res * 1j *gamma)
+    # print(f"{omega_plas/(2*np.pi*1e12)=}")
+    # print(f"{gamma/(2*np.pi*1e12)=}")
 
     epsilon_hat = 4.608535749688730
 
-    for pol, res in zip(poles, residues):
-        epsilon_hat = epsilon_hat + res/(omega - pol)
-    
-    return epsilon_hat
+    # poles = [0, -1j * gamma]
+    # residues = [res, -res]
+    # for pol, res in zip(poles, residues):
+    #     epsilon_hat = epsilon_hat + res/(omega - pol)
+    # return epsilon_hat
+
+    return epsilon_hat - omega_plas**2/(omega**2+1j*gamma*omega)
 
 if __name__ == "__main__":
     # Testing the eps_surmof function
