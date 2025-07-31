@@ -53,7 +53,7 @@ def eps_surmof(hbar_omega, npoles, scale_osc=1, scale_damping=1):
 
     return eps
 
-def eps_ag(hbar_omega):
+def eps_ag_markus(hbar_omega):
     """Relative Permittivity of the silver material
 
     Args:
@@ -71,3 +71,53 @@ def eps_ag(hbar_omega):
 
     omega = to_omega(hbar_omega)
     return 1 + Agwp**2 / (Agw0**2 - omega**2 - 1j*Aggamma*omega)
+
+def eps_ag_sergei(hbar_omega):
+    """Relative Permittivity of the silver material
+
+    Args:
+        hbar_omega (complex): in eV
+
+    Returns:
+        complex: relative permittivity
+    """
+    from scipy.constants import c as c0
+    omega = to_omega(hbar_omega)
+    
+    gamma = 0.219035578322267 * (c0*1e6)
+    res = 9.055135084746365e+03j *(c0*1e6)
+    omega_plas = np.sqrt(- res * 1j *gamma)
+    # print(f"{omega_plas/(2*np.pi*1e12)=}")
+    # print(f"{gamma/(2*np.pi*1e12)=}")
+
+    epsilon_hat = 4.608535749688730
+
+    # poles = [0, -1j * gamma]
+    # residues = [res, -res]
+    # for pol, res in zip(poles, residues):
+    #     epsilon_hat = epsilon_hat + res/(omega - pol)
+    # return epsilon_hat
+
+    return epsilon_hat - omega_plas**2/(omega**2+1j*gamma*omega)
+
+if __name__ == "__main__":
+    # Testing the eps_surmof function
+    import matplotlib.pyplot as plt
+    plt.figure(figsize=(8, 6))
+    hbar_omega = np.linspace(1.4, 2.3, 100) + 0.01j
+    eps = eps_surmof(hbar_omega, npoles=3, scale_osc=1, scale_damping=1)
+    eps_ag_m = eps_ag_markus(hbar_omega)
+    eps_ag_s = eps_ag_sergei(hbar_omega)
+
+    # plt.plot(hbar_omega.real, eps.real, label='Real part')
+    # plt.plot(hbar_omega.real, eps.imag, label='Imaginary part')
+
+    plt.plot(hbar_omega.real, eps_ag_m.real, label='Real part (Ag Markus)')
+    plt.plot(hbar_omega.real, eps_ag_m.imag, label='Imaginary part (Ag Markus)')
+
+    plt.plot(hbar_omega.real, eps_ag_s.real, label='Real part (Ag Sergei)')
+    plt.plot(hbar_omega.real, eps_ag_s.imag, label='Imaginary part (Ag Sergei)')
+    plt.xlabel('$\hbar omega$ [eV]')
+    plt.ylabel('Relative Permittivity')
+    plt.legend()
+    plt.savefig("out/eps_compare.png")

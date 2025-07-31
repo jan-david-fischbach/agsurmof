@@ -1,0 +1,191 @@
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: -all
+#     custom_cell_magics: kql
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#       jupytext_version: 1.16.7
+#   kernelspec:
+#     display_name: .venv
+#     language: python
+#     name: python3
+# ---
+
+# %%
+from qnmsc.surmof_cavity import ag_surmof_cavity_smat
+from qnmsc.plot_trajectories import calc_material_poles, to_eV, unit_conversion, load_data, track_qnms
+from qnmsc.plot_splitting import plot_splitting
+import numpy as np
+import matplotlib.pyplot as plt
+import diffaaable
+
+
+# %%
+from qnmsc.mpl_config import um, inv_um, mm
+import qnmsc.mpl_config
+qnmsc.mpl_config.config()
+
+# %%
+hbar_omega = np.linspace(1.2, 2.3, 401)
+resonant_cavity_thickness = 1/4.780315
+domain = [1-0.5j, 2.5+0.05j]
+
+
+# %%
+s_oscs = [0.025, 0.05, 0.1, 1]
+f_rabis = []
+gs = []
+avg_loss = 0.072 # eV
+for i, scale_osc in enumerate(s_oscs):
+  fig, axs, om_os, Cs, param_interp, rabi_param, f_rabi = plot_splitting(
+    1, 1, scale_osc, 1, domain=domain, n_interp=int(50),
+    color_rabi = "r" if i>=1 else "none", inv_d=False, return_rabi=True
+  )
+  f_rabis.append(f_rabi)
+  gs.append(np.sqrt(np.abs(Cs[np.argmin(np.abs(param_interp - resonant_cavity_thickness))][0])))
+
+
+
+# %%
+fig, axss = plt.subplots(3, 5, figsize=(180*mm, 80*mm), sharey="row", sharex="col", constrained_layout=True, width_ratios=[1,1,1,1,0.06], height_ratios=[1, 0.8, 0.8])
+c_ = unit_conversion['eV']
+
+factors = [0.5, 0.22, 0.6, 1]
+
+axs = axss[0]
+for i, scale_osc in enumerate(s_oscs):
+  plt.sca(axs[i])
+
+  axs[i].set_title(f"$\eta$ = {scale_osc:.3f}")
+
+  scale_damping = 1
+  smat = ag_surmof_cavity_smat(
+      hbar_omega, resonant_cavity_thickness, 1, 
+      scale_osc, scale_damping, 
+    )
+
+  mat_pole = to_eV(calc_material_poles(scale_osc, scale_damping))[0]
+  
+  t = smat['in', 'out']
+
+  Tran = np.abs(smat['in', 'out'])**2
+  Refl = np.abs(smat['in', 'in'])**2
+  Abs = 1 - Tran - Refl
+
+  label_thresh = 3
+  plt.plot(c_(hbar_omega), Tran, color="k")
+  #plt.plot(c_(hbar_omega), Refl, "--k", lw=0.4)
+  axss[-1,i].plot(c_(hbar_omega), Abs, "k")
+  plt.xlim(min(c_(hbar_omega)), max(c_(hbar_omega)))
+
+  fit = diffaaable.aaa(hbar_omega, t)
+  poles = fit[3]
+
+  pole_mask = np.logical_and(poles.real > 1.3, poles.real < 2.3)
+
+  residues = diffaaable.core.residues(*fit)
+  
+  poles = poles[pole_mask]
+  residues = residues[pole_mask]
+  
+  sorter = np.argsort(-np.abs(poles-mat_pole))
+  poles = poles[sorter][:2]
+  residues = residues[sorter][:2]
+
+  contributions = residues[None, :] / (hbar_omega[:, None] - poles[None, :])
+  for j, contrib in enumerate(contributions.T):
+    #plt.plot(hbar_omega, np.real(contrib), linestyle='--', color=f'C{j}')
+    #plt.plot(hbar_omega, np.abs(contrib), color='gray')
+
+    plt.plot(c_(hbar_omega), factors[i]* np.abs(contrib)**2, color=f'C{j}', alpha=0.4, label=f"mode {j+1}")
+
+
+  #plt.plot(hbar_omega, np.real(np.sum(contributions, axis=-1)), color=f'C{i}')
+
+  # print(f"poles: {poles}; residues: {residues}")
+  # for pole in poles:
+  #   plt.axvline(pole, color = f'C{i}')
+
+  #plt.text(390, 1, f"$\\frac{{\Omega_{{\mathrm{{Rabi}}}}}}{{2}} \\approx {f_rabis[i]/2:.3f} \;$ eV\n$|g| \\approx {gs[i]:.3f} \;$ eV\n$\gamma_\mathrm{{avg}} \\approx {avg_loss} \;$ eV", size=4, ha="right")
+
+axss[0, -2].set_ylabel("Modal Contrib. [a.u.]")
+axss[0, -2].yaxis.set_label_position("right")
+
+#axs[0].set_title(f"$\eta$ = {s_oscs[0]:.3f}")
+axs[0].set_ylabel("$T = |t|^2$")
+#axs[3].legend(loc='upper right', fontsize=5)
+plt.ylim((0, None))
+
+axs = axss[1]
+thicknesses = np.linspace(0.0, 0.41, 401)
+lw_qnm=0.2
+for i, scale_osc in enumerate([0.025, 0.05, 0.1, 1]):
+  
+  plt.sca(axs[i])
+  HO, T = np.meshgrid(hbar_omega, thicknesses)
+  smat = ag_surmof_cavity_smat(
+      HO, T, 1, 
+      scale_osc, scale_damping, 
+    )
+  
+  Tran = np.abs(smat['in', 'out'])**2
+  Refl = np.abs(smat['in', 'in'])**2
+
+  cm = plt.pcolormesh(c_(HO), T, Tran, vmin=0, vmax=0.4, rasterized=True)
+  plt.axhline(resonant_cavity_thickness, color='white', linestyle='--', lw=0.3, label="$\delta = 0$")
+
+
+  poles, residues, thickness, material_poles = load_data(
+    1, scale_osc, scale_damping, domain
+  )
+  poles_tracked, residues_tracked = track_qnms(poles, residues)
+  #plt.plot(c_(poles_tracked.real), thickness, color="white", lw=lw_qnm)
+
+  plt.tick_params(which='both', color="white")
+
+
+# axs=axss[0]
+# for i, factor in enumerate(factors):
+#   if factor == 1:
+#     continue
+
+#plt.plot(range(5), range(5), 'ro', markersize=20, clip_on=False, zorder=100)
+
+#   axs[i].plot([1.9, 2], [0.39, 0.39],   alpha=0.4, color='C0')
+#   axs[i].plot([1.9, 2], [0.41, 0.41], alpha=0.4, color='C1')
+#   axs[i].text(2.05, 0.4, f"x{factor:.2f}", va="center")
+
+for i, axs in enumerate(axss.T[:-1]):
+  for j, ax in enumerate(axs):
+    letter = chr(ord("a")+j)
+    ax.annotate(
+          f" ({letter}{i+1})",
+          xy=(0, 1), xycoords='axes fraction',
+          xytext=(+0.5, -0.5), textcoords='offset fontsize',
+          fontsize='medium', verticalalignment='top', fontfamily='serif',
+          bbox=dict(facecolor=(1,1,1,0.8), edgecolor='none', pad=2.0))
+
+#plt.plot([],[], color='white', lw=lw_qnm, label="QNMs")
+axss[-1,0].set_ylabel(f"$1-T-R$")
+axss[1,0].set_ylim(min(thicknesses), max(thicknesses))
+axss[1,0].set_ylabel(f"$d$ [{um}]")
+#axs[-1].legend(labelcolor='white')
+
+axss[0, -1].axis('off')
+axss[-1, -1].axis('off')
+
+cbar = plt.colorbar(cm, cax=axss[1][-1], label="$T = |t|^2$")
+ax = cbar.ax
+ax.tick_params(which='both', color="white")
+
+pos = ax.get_position()
+#ax.set_position([pos.x0+0.7, pos.y0, pos.width, pos.height])
+ax.set_position([pos.x0+0.07, pos.y0+0.01, pos.width, pos.height])
+
+fig.supxlabel(r"$\hbar \omega$ [eV]")
+plt.savefig("out/OscReductionObservable.pdf", bbox_inches='tight', dpi=1600)
+
+# %%

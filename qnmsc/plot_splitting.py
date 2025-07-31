@@ -31,7 +31,7 @@ if __name__ == "__main__":
 def plot_splitting(
   modenumber, npoles, scale_osc, scale_damping, domain, 
   inv_d=True, ylim=(1.2, 2.5), xlim=(1,12), color_rabi="r",
-  axs=None, return_fit=False, n_interp=300,
+  axs=None, return_fit=False, return_rabi=False, n_interp=300,
   c_os          = (0.8, 0.8, 0.8),
   c_grid        = (0.8, 0.8, 0.8),
   c_fundamental = "gray",
@@ -42,8 +42,14 @@ def plot_splitting(
   lw_higher     = 1,
   force_legend  = False,
   legend_loc    = 'best',
-  plot_dots     = True
+  plot_dots     = True,
+  plot_cavity_mode = True,
+  plot_extracted_coupling = True,
+  scatter_numerical = False
   ):
+
+  ls_higher = '--' if c_higher == "white" else '-'
+  lw_optical = 0.4
 
   poles, residues, thickness, material_poles = load_data(
     npoles, scale_osc, scale_damping, domain
@@ -64,9 +70,14 @@ def plot_splitting(
   print(f"QNMs at rabi: {selected[rabi_idx, :]}")
   
   def populate_legend():
+    
+    if plot_cavity_mode:
+      plt.plot([], [], ls='dashdot', color=c_fundamental, label=r"$\tilde \omega_\mathrm{c}$", lw=lw_optical*0.5, zorder=7)
+      plt.plot([], [], "-", color=c_fundamental, label=r"$\tilde \omega_\mathrm{c} + \sum_j \mathrm{i} V_{j}$", lw=lw_optical, zorder=7)
+
     plt.plot([],[], color=c_fundamental, label="fundamental QNMs")
-    plt.plot([],[], color=c_higher, linewidth=lw_higher, label="higher order QNMs")
-    plt.plot([],[], "--", color=c_os, zorder=5, label="'uncoupled' cavity mode")
+    plt.plot([],[], ls_higher, color=c_higher, linewidth=lw_higher, label="higher order QNMs")
+    plt.plot([],[], color=color_rabi, label=f"$\omega_\mathrm{{split}}=2\cdot{f_rabi.real/2:.3f}[\mathrm{{eV}}]$")
     if plot_dots:
       plt.plot([],[], color=c_fit, linestyle="none", marker=".", label="coupling fit")
 
@@ -82,14 +93,23 @@ def plot_splitting(
     if force_legend:
       populate_legend()
 
-  f_mode = selected.real
-  plt.plot(param, f_mode, color=c_fundamental)
+  param_interp = np.linspace(min(param), max(param), n_interp)
+  for fund_mode in selected.real.T:
+    if scatter_numerical:
+      sorter = np.argsort(param)
+      fund_mode_interp = np.interp(param_interp, param[sorter], fund_mode[sorter])
+      # print(f"{fund_mode_interp=}")
+      # print(f"{fund_mode=}")
+      # print(f"{param=}")
+      plt.plot(param_interp, fund_mode_interp, mec=c_fundamental, marker="o", mfc="none", ls="none", ms=2, zorder=6)
+    else:
+      plt.plot(param, fund_mode, color=c_fundamental)
+  fund_mode = selected.real
 
   Cs=[]
   om_os=[]
   evs_fit = []
 
-  param_interp = np.linspace(min(param), max(param), n_interp)
   for i, p in enumerate(param_interp):
       interp_d = 1/p if inv_d else p
       evs = []
@@ -111,49 +131,63 @@ def plot_splitting(
 
   if plot_dots:
     plt.plot(param_interp, np.array(evs_fit).real, color=c_fit, linestyle="none", marker=".")
-  plt.plot(param_interp, np.array(om_os).real, "--", color=c_os, zorder=5)
-  plt.vlines(
-    [rabi_param],*f_mode[rabi_idx, [0, -1]], color=color_rabi, 
-    label=f"$\Omega_\mathrm{{Rabi}}=2\cdot{f_rabi.real/2:.3f}[\mathrm{{eV}}]$",
-    zorder=6
-  )
-  plt.ylabel("$\hbar \omega$ [eV]")
+
+  Cs = np.array(Cs)
+  iVii = Cs / (-1* material_poles)
+  om_os = np.array(om_os)
+
+  corr = np.sum(iVii, axis=-1)
+  corr_om_os = om_os + corr
+  
+  if plot_cavity_mode:
+    plt.plot(param_interp, corr_om_os.real, "-", color=c_fundamental, lw=lw_optical, zorder=7)
+    plt.plot(param_interp, om_os.real, ls='dashdot', color=c_fundamental, lw=lw_optical*0.5, zorder=7)
+
+  if color_rabi != 'none':
+    plt.vlines(
+      [rabi_param],*fund_mode[rabi_idx, [0, -1]], color=color_rabi,
+      zorder=6
+    )
+  plt.ylabel(r"$\Re\{\hbar \tilde \omega\}$ [eV]")
   plt.legend(fontsize=5, labelcolor=c_font, loc=legend_loc)
 
   for i,mat_pole in enumerate(material_poles):
       plt.axhline(mat_pole.real, color=c_mat[i],)#, linestyle="--")
 
   for pole in poles_tracked.T: # higher order modes
-    plt.plot(param, pole.real, color=c_higher, linewidth=lw_higher, zorder=-1)
+    plt.plot(param, pole.real, ls_higher, color=c_higher, linewidth=lw_higher, zorder=-1)
 
   plt.axvline(rabi_param, color=c_grid, zorder=-1)
   plt.ylim(ylim)
   plt.sca(axs[1])
   plt.axvline(rabi_param, color=c_grid, zorder=-1)
 
-  plt.ylabel("Coupling $\sqrt{\hat g_i g_i}$ [eV]")
-  Cs = np.array(Cs)
-  cs = np.sqrt(np.real(Cs))
-  for i,coupling in enumerate(cs.T):
-      plt.plot(param_interp, coupling, ".-" if plot_dots else "-", color=c_mat[i], label=f"$p_{i+1}=\complexqty{{{material_poles[i]:.3f}}}{{eV}}$")
+  if plot_extracted_coupling:
+    plt.ylabel("Coupling $\sqrt{\hat g_i g_i}$ [eV]")
+    cs = np.sqrt(np.real(Cs))
+    for i,coupling in enumerate(cs.T):
+        plt.plot(param_interp, coupling, ".-" if plot_dots else "-", color=c_mat[i], label=f"$p_{i+1}=\complexqty{{{material_poles[i]:.3f}}}{{eV}}$")
 
-  gamma_avg = -np.sum(np.array(evs_fit), axis=-1).imag/(npoles+1) * cs[:,0]/cs[:,0]
-  gamma_avg_res = np.interp(rabi_param, param_interp, gamma_avg)
+    gamma_avg = -np.sum(np.array(evs_fit), axis=-1).imag/(npoles+1) 
+    gamma_avg[np.isnan(Cs[:,0])] = np.nan
 
-  plt.plot(param_interp, gamma_avg, color="k", label=f"$\gamma_\mathrm{{avg}} = {gamma_avg_res:.3f}$ eV @ $\delta = 0$")
+    plt.plot(param_interp, gamma_avg, color="k", label=f"$\gamma_\mathrm{{avg}}$")# = {gamma_avg_res:.3f}$ eV @ $\delta = 0$")
   
-  stud = 0.1
+  stud = 0.1 if inv_d else 0.02
   x = [rabi_param-stud,rabi_param+stud]
-  plt.plot(x, [f_rabi.real/2]*2, color="r")
+  if color_rabi != 'none':
+    plt.plot(x, [f_rabi.real/2]*2, color=color_rabi)
   #plt.ylim(0, 1.1*max(f_rabi.real/2, np.nanmax(cs.flatten())))
 
-  plt.legend(fontsize=6, title="Material Resonances", loc="lower right", frameon=True)
+  plt.legend(fontsize=5, title="Material Resonances", loc="lower right", frameon=True)
   if inv_d:
-      fig.supxlabel(r"Inverse Cavity Thickness $\frac{1}{d}$ ["+inv_um+"]")
+      plt.xlabel(r"Inverse Cavity Thickness $\frac{1}{d}$ ["+inv_um+"]")
       plt.xlim(xlim)
   else:
-      fig.supxlabel("Cavity Thickness [um]")
+      plt.xlabel("Cavity Thickness [um]")
 
+  if return_rabi:
+    return fig, axs, om_os, Cs, param_interp, rabi_param, f_rabi
   if return_fit:
     return fig, axs, om_os, Cs, param_interp
   return fig, axs
@@ -202,7 +236,7 @@ if __name__ == "__main__":
 
   fig, axs, om_os, Cs, param = plot_splitting(1,3,1,1,domain, axs=axs,
     c_fundamental="white",
-    c_higher="white",
+    c_higher="k",
     c_grid=(0.4, 0.4, 0.4),
     lw_higher=0.35,
     c_fit="white",
@@ -215,20 +249,6 @@ if __name__ == "__main__":
     plot_dots=False,
     return_fit=True,
   )
-
-  ## Corrected estimated 0 pole mode
-  plt.sca(axs[0])
-  poles, residues, thickness, material_poles = load_data(
-    3, 1, 1, domain
-  )
-  iVii = Cs / (-1* material_poles)
-  om_os = np.array(om_os)
-
-  corr = np.sum(iVii, axis=-1)
-  corr_om_os = om_os + corr
-  
-  plt.plot(param, corr_om_os, "-", color="white", label="corrected 'uncoupled' cavity mode", lw=0.6, zorder=7)
-  plt.legend(fontsize=5, labelcolor="white", loc="lower right")
 
   for i, ax in enumerate(axs):
     letter = chr(ord("a")+i)
@@ -256,23 +276,20 @@ if __name__ == "__main__":
   corr = np.sum(iVii, axis=-1)
   corr_om_os = om_os + corr
   
-  plt.plot(param, corr_om_os, "-")
+  plt.plot(param, corr_om_os.real, "-")
   plt.plot(1/thickness_0pole, poles_tracked_0pole[:,0], ".")
-  plt.plot(param, om_os, "-")
+  plt.plot(param, om_os.real, "-")
 
   # %%
+  # %matplotlib widget
   plot_splitting(1,1,1,1,domain, plot_dots=False)
   plt.savefig("out/Single_pole_splitting.pdf")
 
   # %%
-  ## Experimentation
-  exit()
-
-  # %%
-  fig, axs, om_os1, Cs1 = plot_splitting(1,1,1,1,domain, color_rabi="C0", return_fit=True)
-  _, _,     om_os2, Cs2 = plot_splitting(2,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
-  _, _,     om_os3, Cs3 = plot_splitting(3,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
-  _, _,     om_os4, Cs4 = plot_splitting(4,1,1,1,domain, color_rabi="C2", return_fit=True, axs=axs, xlim=(0.3, 12))
+  fig, axs, om_os1, Cs1, _ = plot_splitting(1,1,1,1,domain, color_rabi="C0", return_fit=True)
+  _, _,     om_os2, Cs2, _ = plot_splitting(2,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
+  _, _,     om_os3, Cs3, _ = plot_splitting(3,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
+  _, _,     om_os4, Cs4, _ = plot_splitting(4,1,1,1,domain, color_rabi="C2", return_fit=True, axs=axs, xlim=(0.3, 12))
 
   # %%
   cs1, cs2, cs3, cs4 = [np.real(np.sqrt(Cs)) for Cs in [Cs1, Cs2, Cs3, Cs4]]
@@ -283,19 +300,17 @@ if __name__ == "__main__":
   plt.plot(om_os4, cs4)
 
 
-# %%
-om_oss = []
-css = []
-axs = None
-for i, mode in enumerate([1,2,4,5]):
-  fig, axs, om_os, Cs = plot_splitting(mode,1,1,1,domain, 
-    color_rabi=f"C{i}", return_fit=True, axs=axs,
-    xlim=(0.2,7), inv_d=True)
+  # %%
+  om_oss = []
+  css = []
+  axs = None
+  for i, mode in enumerate([1,2,4,5]):
+    fig, axs, om_os, Cs, _ = plot_splitting(mode,1,1,1,domain, 
+      color_rabi=f"C{i}", return_fit=True, axs=axs,
+      xlim=(0.2,7), inv_d=True)
   om_oss.append(om_os)
   css.append(np.real(np.sqrt(Cs)))
 
-# %%
-for om_os, cs in zip(om_oss, css):
-  plt.plot(om_os, cs)
-
-# %%
+  # %%
+  for om_os, cs in zip(om_oss, css):
+    plt.plot(om_os, cs)
