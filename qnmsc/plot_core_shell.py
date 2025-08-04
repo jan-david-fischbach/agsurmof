@@ -58,9 +58,9 @@ def plot_trajectory(pol=0, l=1, mode=1, prefix="SURMOF_SILVER", suffix='fixedthi
 
     full_tm.shape
     mode_freq = full_tm[:, 0]
-    r_outer = full_tm[:, 1] + 20e-3 # TODO ask why this shift?!
+    r_core = full_tm[:, 1] + 20e-3 # TODO ask why this shift?!
 
-    plt.plot(1/r_outer, mode_freq.real, **kwargs)
+    plt.plot(1/r_core, mode_freq.real, **kwargs)
   except FileNotFoundError as e:
     return
 
@@ -86,7 +86,7 @@ def plot_cplx_trajectory(pol=0, l=1, mode=1, prefix="SURMOF_SILVER", suffix='fix
 
     full_tm.shape
     mode_freq = full_tm[:, 0]
-    r_outer = full_tm[:, 1] + 20e-3 # TODO ask why this shift?!
+    r_core = full_tm[:, 1] + 20e-3 # TODO ask why this shift?!
 
     plt.plot(mode_freq.real, mode_freq.imag, **kwargs)
   except FileNotFoundError as e:
@@ -94,12 +94,12 @@ def plot_cplx_trajectory(pol=0, l=1, mode=1, prefix="SURMOF_SILVER", suffix='fix
 
 
 # %%
-r_outer_lims = [0.07, 0.37]
+r_core_lims = [0.07, 0.37]
 k0_to_eV = 1e6*h*c0/e/(2*np.pi)
 
 def plot_single_gradient_trajectory(pol=0, l=1, mode=1, 
   prefix="SURMOF_SILVER", suffix='fixedthickness20nm', 
-  interp_d=np.linspace(*r_outer_lims, 201), colors="k", **kwargs):
+  interp_d=np.linspace(*r_core_lims, 201), colors="k", **kwargs):
 
   try:
     data = load_data(pol, l, mode, prefix, suffix)
@@ -108,9 +108,9 @@ def plot_single_gradient_trajectory(pol=0, l=1, mode=1,
 
   full_tm = data['full_tm'][::-1]
   pole = full_tm[:, 0] * k0_to_eV
-  r_outer = np.real(full_tm[:, 1] + 20e-3)
+  r_core = np.real(full_tm[:, 1] + 20e-3)
   
-  # print("r_outer: ", max(r_outer), min(r_outer))
+  # print("r_core: ", max(r_core), min(r_core))
   # print("interp_d: ", max(interp_d), min(interp_d))
 
   res = full_tm[:, 3] * k0_to_eV
@@ -118,9 +118,9 @@ def plot_single_gradient_trajectory(pol=0, l=1, mode=1,
   #plt.plot(pole.real, pole.imag, **kwargs)
 
   nans = {'left': np.nan, 'right': np.nan}
-  real = np.interp(interp_d, r_outer, pole.real, **nans)
-  imag = np.interp(interp_d, r_outer, pole.imag, **nans)
-  s = np.interp(interp_d, r_outer, np.abs(res))/(-imag) * 100
+  real = np.interp(interp_d, r_core, pole.real, **nans)
+  imag = np.interp(interp_d, r_core, pole.imag, **nans)
+  s = np.interp(interp_d, r_core, np.abs(res))/(-imag) * 100
   plt.scatter(real, imag, 
     c=colors, edgecolor='none', 
     #s=s, 
@@ -132,8 +132,6 @@ def plot_single_gradient_trajectory(pol=0, l=1, mode=1,
   add_arrow_head(real[::-1] - 0.005*scale, imag[::-1], 0.01*np.sqrt(scale), np.pi/16/np.sqrt(scale)/np.sqrt(scaley)/2, colors[::-1])
   
 
-
-
 def plot_real_trajectory(pol=0, l=1, mode=1, prefix="SURMOF_SILVER", suffix='fixedthickness20nm', **kwargs):
   try:
     data = load_data(pol, l, mode, prefix, suffix)
@@ -144,9 +142,11 @@ def plot_real_trajectory(pol=0, l=1, mode=1, prefix="SURMOF_SILVER", suffix='fix
 
   full_tm.shape
   mode_freq = full_tm[:, 0] * k0_to_eV
-  r_outer = full_tm[:, 1] + 20e-3 # TODO ask why this shift?!
+  r_core = full_tm[:, 1] #+ 20e-3 # TODO ask why this shift?!
 
-  plt.plot(mode_freq.real, r_outer, **kwargs)
+  plt.plot(mode_freq.real, r_core, **kwargs)
+  if kwargs.get('color', '') == "C0":
+    plt.fill_betweenx(r_core, mode_freq.real-mode_freq.imag, mode_freq.real+mode_freq.imag, color=[0.9,0.9,0.9], zorder=-2)
 
 def planar_analogous(osc_strength, axs, plot_domain = [1.25-0.6j, 2.25+0.05j], colors=[], label_suffix=''):
   """
@@ -169,7 +169,7 @@ def planar_analogous(osc_strength, axs, plot_domain = [1.25-0.6j, 2.25+0.05j], c
   _, _, _, zeros = diffaaable.aaa(E[::ds, ::ds], 1/eps[::ds, ::ds])
 
   
-  interp_d = np.linspace(*r_outer_lims, 8001)
+  interp_d = np.linspace(*r_core_lims, 8001)
 
   cmap = plt.cm.viridis_r
   thickness_color_norm = mpl.colors.Normalize(vmin=min(interp_d), vmax=max(interp_d))
@@ -266,19 +266,19 @@ for i, osc_strength in enumerate([0.01, 0.025, 0.05, 1]):
   axs[0, i].set_title(f"$\eta$ = {osc_strength:.3f}")
 
 cbar_ax = axs[0, -1]
-cbar = plt.colorbar(ax=cbar_ax, mappable=mappable, fraction=1, label=rf'$r_\mathrm{{outer}}$ [{um}]')
+cbar = plt.colorbar(ax=cbar_ax, mappable=mappable, fraction=1, label=rf'$r_\mathrm{{core}}$ [{um}]')
 
 # axs[0, 0].set_title(f"$\eta$: {list(mode_to_color.keys())[-1]**2:.2f}")
 
 axs[0, 0].set_ylabel(r"$\Im\{\hbar \tilde \omega\}$ [eV]")
 axs[0, 0].yaxis.label.set_position((-0.2, 0.25))
 
-axs[2, 0].set_ylabel(rf'$r_\mathrm{{outer}}$ [{um}]')
+axs[2, 0].set_ylabel(rf'$r_\mathrm{{core}}$ [{um}]')
 
-fig.supxlabel(r'$\Re\{\hbar \tilde \omega\}$ [eV]')
+fig.supxlabel(r'$\Re\{\hbar \tilde \omega\}$ [eV]', y=0.06)
 fig.align_ylabels()
 
-axs[2, 0].set_ylim(0.07, 0.37)
+axs[2, 0].set_ylim(0.05, 0.35)
 
 d = .5  # proportion of vertical to horizontal extent of the slanted line
 kwargs = dict(marker=[(-1, -d), (1, d)], markersize=6,

@@ -29,8 +29,10 @@ mm = 0.1/2.54
 
 # define an object that will be used by the legend
 class MulticolorPatch(object):
-    def __init__(self, colors):
+    def __init__(self, colors, width_scaling = 1, height_scaling = 0.7):
         self.colors = colors
+        self.width_scaling = width_scaling
+        self.height_scaling = height_scaling
         
 # define a handler for the MulticolorPatch object
 class MulticolorPatchHandler(object):
@@ -40,8 +42,8 @@ class MulticolorPatchHandler(object):
         for i, c in enumerate(orig_handle.colors):
             patches.append(plt.Rectangle([width/len(orig_handle.colors) * i - handlebox.xdescent, 
                                           -handlebox.ydescent],
-                           width / len(orig_handle.colors),
-                           height*0.7, 
+                           width / len(orig_handle.colors) * orig_handle.width_scaling,
+                           height*orig_handle.height_scaling, 
                            facecolor=c, 
                            edgecolor='none'))
 
