@@ -16,6 +16,7 @@
 
 # %%
 
+import warnings
 import treams
 from qnmsc.materials import to_omega, eps_surmof, eps_ag
 from scipy.constants import c as c0, hbar, e
@@ -52,7 +53,10 @@ def det_tmat(
 
 
 # %%
-treams.config.set_BRANCH_CUT_SQRT_MIE_N(-0.5*np.pi)
+try:
+  treams.config.set_BRANCH_CUT_SQRT_MIE_N(-0.5*np.pi)
+except AttributeError:
+  warnings.warn(" You seem to be using vanilla treams. Make sure to use JAT to evaluate qnms.")
 
 # %%
 if __name__=='__main__':
