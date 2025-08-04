@@ -94,5 +94,5 @@ plt.savefig("assets/out/connected_complex_plane.pdf")
 # ## Save Results
 
 # %%
-with open("assets/out/3pole_1osc_1damping_beta.pkl", "wb") as file:
+with open("assets/out/tracked_3pole_1osc_1damping_beta.pkl", "wb") as file:
     pickle.dump({"poles": tracked_poles, "residues": tracked_residues, "param": beta}, file)
