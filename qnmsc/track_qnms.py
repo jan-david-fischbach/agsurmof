@@ -1,4 +1,4 @@
-# ---
+ # ---
 # jupyter:
 #   jupytext:
 #     cell_metadata_filter: -all
@@ -31,7 +31,7 @@ def filename(npoles, osc_strength, damping, domain):
   d = domain
   folder = Path(f"tmp/elli/domain_{d[0].real}_{d[0].imag}_{d[1].real}_{d[1].imag}")
   folder.mkdir(parents=True, exist_ok=True)
-  file = folder/f"fine_{npoles}pole_{osc_strength}osc_{damping}damping.pkl"
+  file = folder/f"fine_{npoles}pole_{osc_strength}osc_{damping}damping_beta.pkl"
   return file
 
 def find_qnms(rs, betas, npoles=3, osc_strength=1, damping=1, 
@@ -177,23 +177,13 @@ def eyes(ts, all_poles, all_residues):
 
 # %%
 if __name__ == "__main__":
-  rs = 0.003*(np.arange(1, 30)+1)
-  betas = 0.7*np.ones_like(rs)
+
+  betas = np.linspace(0.5,0.9, 21) 
+  rs = 0.04*np.ones_like(betas)
 
   domain = [1-0.5j, 2.5+0.05j]
 
   all_poles, all_residues = find_qnms(
     rs, betas, npoles=3, osc_strength=1, damping=1, domain=domain, 
     checkpointing=True
-  )
-
-
-  betas = 0.6 + 0.01*np.arange(0, 21)
-  rs = 0.03*np.ones_like(betas)
-
-  domain = [1-0.5j, 2.5+0.05j]
-
-  all_poles, all_residues = find_qnms(
-    rs, betas, npoles=3, osc_strength=1, damping=1, domain=domain, 
-    checkpointing=True
-  )
+  ) 

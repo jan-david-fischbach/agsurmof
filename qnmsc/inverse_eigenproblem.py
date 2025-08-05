@@ -21,6 +21,16 @@ def example_hamiltonian(a=0.8, b=0.5, om_o=2, om_a=5, om_b=2):
   ]
   return H, om_a, om_b
 
+def example_hamiltonian_4material_modes(a=0.8, b=0.5, om_o=2, om_a=5, om_b=2):
+  H = [
+    [om_o,       a,    b,    2*a,    2*b],
+    [np.conj(a), om_a, 0,    0,      0],
+    [np.conj(b), 0,    om_b, 0,      0],
+    [2*np.conj(a), 0,  0,    om_a*3, 0],
+    [2*np.conj(b), 0,  0,    0,      om_b*4],
+  ]
+  return H, om_a, om_b, 3*om_a, 4*om_b
+
 def sum_pair_prod(vec):
     mat = vec[None, :]*vec[:, None]
     mat[np.eye(len(mat), dtype=bool)] = 0
@@ -55,7 +65,10 @@ def vec_b(evs, oms):
   return P_lam(evs, oms)*evs
   
 def solve_inv_eig(evs, oms):
-  """For an arbitrary number of material poles"""
+  """
+  For an arbitrary number of material poles
+
+  """
   evs=np.atleast_1d(evs)
   oms=np.atleast_1d(oms)
   if evs.shape[-1]!=oms.shape[-1]+1:
@@ -79,13 +92,24 @@ def test_fwd_eig(om_o, oms, coupling):
 
 if __name__=="__main__":
     a,b = 1j, 2
-    H, *oms = example_hamiltonian(a,b)
-    evs = np.linalg.eigvals(H)
-    A,B, om_o = get_coupling(evs, oms)
-    print(f"{A=},{np.abs(a)**2=}\n{B=},{np.abs(b)**2=}")
+    # H, *oms = example_hamiltonian(a,b)
+    # evs = np.linalg.eigvals(H)
+    # A,B, om_o = get_coupling(evs, oms)
+    # print(f"{A=},{np.abs(a)**2=}\n{B=},{np.abs(b)**2=}")
 
-    om_o, A,B = solve_inv_eig(evs, oms)
-    print(f"{A=},{np.abs(a)**2=}\n{B=},{np.abs(b)**2=}")
-    print(f"{om_o=}")
+    # om_o, A,B = solve_inv_eig(evs, oms)
+    # print(f"{A=},{np.abs(a)**2=}\n{B=},{np.abs(b)**2=}")
+    # print(f"{om_o=}")
+
+    H, *oms = example_hamiltonian_4material_modes(a,b)
+
+    print(f"{H=}")
+    evs = np.linalg.eigvals(H)
+
+    om_o, A,B,C,D = solve_inv_eig(evs, oms)
+    print(f"{A=}")
+    print(f"{B=}")
+    print(f"{C=}")
+    print(f"{D=}")
 
 

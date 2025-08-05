@@ -25,8 +25,8 @@ import numpy as np
 def det_tmat(
   hbar_omega,
   materials = None,
-  radius = 0.3,
-  mmax = 2,
+  radius = 0.04,
+  mmax = 0,
   beta = 0.7,
   thickness_surmof = 0.02,
   npoles = 3,

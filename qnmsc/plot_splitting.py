@@ -16,7 +16,7 @@
 
 # %%
 from qnmsc.track_qnms import filename, track_qnms
-from qnmsc.plot_trajectories import plot_thickness, load_data, select_modes
+from qnmsc.plot_trajectories import load_data, select_modes
 from qnmsc import inverse_eigenproblem
 from qnmsc.mpl_config import um, inv_um, mm
 import numpy as np
@@ -160,7 +160,6 @@ def plot_splitting(
 
 # %%
 if __name__ == "__main__":
-  from qnmsc.surmof_cavity import ag_surmof_cavity_smat
   
   domain = [1-0.5j, 2.5+0.05j]
   domain = [0.7-0.7j, 5.0+0.05j]
@@ -169,93 +168,7 @@ if __name__ == "__main__":
   inv_d = np.linspace(1/1.2, 14, 1021)
   E, T = np.meshgrid(hbar_omega, 1/inv_d)
 
-  smat = ag_surmof_cavity_smat( 
-    E, T
-  )
-
-  # %%
-  fig, axs = plt.subplots(2, 1, sharex=True, constrained_layout=True, figsize=(90*mm, 70*mm), height_ratios=[3,1.5])
-  plt.sca(axs[0])
-
-  from matplotlib.colors import ListedColormap
-  a = 0.7
-  my_cmap = plt.cm.viridis(np.arange(plt.cm.viridis.N))
-  my_cmap[:,0:3] *= a 
-  my_cmap = ListedColormap(my_cmap)
-
-  plt.pcolormesh(1/T, E, np.abs(smat['in', 'out'])**2, zorder=-2, rasterized=True, shading='gouraud', cmap=my_cmap)
-  cbar = plt.colorbar(label="Transmissivity")
-
-  plt.tick_params(which='both', color="white")
-  cbar.ax.tick_params(which='both', color="white")
-
-  for which, length, width in zip(['major', 'minor'], [3.5, 2], [0.5,0.5]):
-    plt.tick_params(which=which, length=length, width=width)
-    cbar.ax.tick_params(which=which, length=length, width=width)
-
-  plot_splitting(1,3,1,1,domain, axs=axs,
-    c_fundamental="white",
-    c_higher="white",
-    c_grid=(0.4, 0.4, 0.4),
-    lw_higher=0.35,
-    c_fit="white",
-    c_font="white",
-    c_mat=["C9", "C1", "C2"],
-    force_legend=True,
-    xlim=(min(inv_d), max(inv_d)),
-    ylim=(min(hbar_omega), max(hbar_omega)),
-    legend_loc="lower right",
-    plot_dots=False
-  )
-
-  for i, ax in enumerate(axs):
-    letter = chr(ord("a")+i)
-    ax.annotate(
-          f" ({letter})",
-          xy=(0, 1), xycoords='axes fraction',
-          xytext=(+0.5, -0.5), textcoords='offset fontsize',
-          fontsize='medium', verticalalignment='top', fontfamily='serif',
-          bbox=dict(facecolor=(1,1,1,0.8), edgecolor='none', pad=2.0))
-
-  plt.savefig("out/Fit_Hamilonian_BG.pdf", dpi=600)
-
   # %%
   # %matplotlib inline
   fig, axs, om_os, cs = plot_splitting(1,3,1,1,domain, return_fit=True, plot_dots=False)
   plt.savefig("out/Fit_Hamiltonian.pdf")
-
-  # %%
-  plot_splitting(1,1,1,1,domain, plot_dots=False)
-  plt.savefig("out/Single_pole_splitting.pdf")
-
-  # %%
-  ## Experimentation
-
-  # %%
-  fig, axs, om_os1, cs1 = plot_splitting(1,1,1,1,domain, color_rabi="C0", return_fit=True)
-  _, _,     om_os2, cs2 = plot_splitting(2,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
-  _, _,     om_os2, cs2 = plot_splitting(3,1,1,1,domain, color_rabi="C1", return_fit=True, axs=axs)
-  _, _,     om_os3, cs3 = plot_splitting(4,1,1,1,domain, color_rabi="C2", return_fit=True, axs=axs, xlim=(0.3, 12))
-
-  # %%
-  plt.plot(om_os1, cs1)
-  plt.plot(om_os2, cs2)
-  plt.plot(om_os3, cs3)
-
-
-# %%
-om_oss = []
-css = []
-axs = None
-for i, mode in enumerate([1,2,4,6]):
-  fig, axs, om_os, cs = plot_splitting(mode,1,1,1,domain, 
-    color_rabi=f"C{i}", return_fit=True, axs=axs,
-    xlim=(0.2,7), inv_d=True)
-  om_oss.append(om_os)
-  css.append(cs)
-
-# %%
-for om_os, cs in zip(om_oss, css):
-  plt.plot(om_os, cs)
-
-# %%
