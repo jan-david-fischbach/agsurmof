@@ -440,11 +440,15 @@ if __name__ == "__main__":
     # %matplotlib widget
 
     oscs = [1, 0.1, 0.05, 0.025]
-    plot_domain2 = [1.6-0.15j, 1.82] #+0.05j]
-    plot_domain1 = [1.3-0.15j, 2.2] #+0.05j]
+    plot_domain2 = [1.6-0.149j, 1.82] #+0.05j]
+    plot_domain1 = [1.3-0.149j, 2.2] #+0.05j]
 
     thickness_color_ranges = [[0.19, 0.235], [0,0.4]]
     thresh = 1
+
+    pole_to_color = ["C0", "C1", "C2", "C0", "C3"] + ["none"]*20
+    pole_to_color[11] = "C2"
+    pole_to_color[5] = pole_to_color[10] = pole_to_color[16] = "C3"
 
     fig, axss = plt.subplots(
         2, len(oscs)+3, sharex="col",
@@ -528,11 +532,13 @@ if __name__ == "__main__":
       real = np.interp(interp_d, thickness, pole.real)
       imag = np.interp(interp_d, thickness, pole.imag)
 
-      axins.scatter(real, imag, edgecolor='none', s=1, c=colors_interp, rasterized=True)
-      add_arrow_head(real, imag, 0.0001, np.pi/16, colors_interp, ax = axins)
+      color = pole_to_color[i]
+      axins.scatter(real, imag, edgecolor='none', s=1, c=color, rasterized=True)
+      color = "gray" if color == "none" else color
+      add_arrow_head(real, imag, 0.0001, np.pi/16, [color]*len(colors_interp), ax = axins)
 
       poi_labels = {3: "FP", 0: "M"}
-      thickness_pts = [0.2, 0.21, 0.22]
+      thickness_pts = [0.2, 0.2095, 0.22]
       if i in poi_labels:
         real_labels = np.interp(thickness_pts, thickness, pole.real)
         imag_labels = np.interp(thickness_pts, thickness, pole.imag)
@@ -632,7 +638,7 @@ poles, residues, thickness, material_poles = load_data(
   npoles, scale_osc, scale_damping, domain
 )
 poles_tracked, residues_tracked = track_qnms(poles, residues)
-mask = thickness < 0.4
+mask = thickness < 10#0.4
 poles_tracked = poles_tracked[mask]
 residues_tracked = residues_tracked[mask]
 thickness = thickness[mask]
