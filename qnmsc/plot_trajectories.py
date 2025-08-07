@@ -9,7 +9,7 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.16.7
 #   kernelspec:
-#     display_name: .venv
+#     display_name: qnmsc (3.11.10)
 #     language: python
 #     name: python3
 # ---
@@ -383,27 +383,49 @@ if __name__ == "__main__":
 
     # %%
     fig, axss = plt.subplots(
-        2, 3, sharex="col",
+        3, 3, sharex="col",
         figsize=(90*mm,60*mm),  
         width_ratios=[1,0.03,0.03],
-        height_ratios=[1, 0.6], constrained_layout=True
+        height_ratios=[0.4, 1, 0.6], constrained_layout=True
     )
     
+    e_r = np.linspace(domain[0].real, domain[1].real, 1200)
+    eps_r = eps_surmof(e_r, 3, 1, 1)
+    plt.sca(axss[0, 0])
+    plt.plot(e_r, eps_r.real, color="gray", label=r"$\Re\{\varepsilon_\mathrm{r}\}$")
+    plt.plot(e_r, eps_r.imag, color="k", label=r"$\Im\{\varepsilon_\mathrm{r}\}$")
+    plt.legend(loc="upper right", fontsize=6, frameon=True)
+    plt.ylabel(r"$\varepsilon_\mathrm{r}$")
+
+    plt.fill_between(e_r, 0, 1, hatch="\\\\\\", where=eps_r.real<0, color="none", edgecolor="k", transform=plt.gca().get_xaxis_transform(), lw=0.5)
+
     pcm, cmap, norm = plot_trajectories(
       3, 1, 1, domain, unit=unit, 
-      plot_neg_eps_r=True, axs=axss[:,0], plot_domain=[1.5-0.06j, 2.1], 
+      plot_neg_eps_r=True, axs=axss[1:,0], plot_domain=[1.5-0.06j, 2.1], 
       upsample=10, cbar=False, arrows=True
     )
 
     plt.xlim(1.5, 2.1)
     mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
-    cb = plt.colorbar(mappable, cax=axss[0, 1], label=f"$d$ [{um}]")
+    cb = plt.colorbar(mappable, cax=axss[1, 1], label=f"$d$ [{um}]")
 
-    cb = plt.colorbar(pcm, cax=axss[0, 2], label="$\Re\{\\varepsilon_\mathrm{r}\}$", ticks=[-1e3, -1, 0, 1, 1e3])
+    cb = plt.colorbar(pcm, cax=axss[1, 2], label="$\Re\{\\varepsilon_\mathrm{r}\}$", ticks=[-1e3, -1, 0, 1, 1e3])
     cb.set_ticklabels(["-$10^3$", -1, 0, 1, "$10^3$"])
 
-    axss[1,1].axis("off")
-    axss[1,2].axis("off")
+    unused_axis = [[0,1], [0,2], [2,1], [2,2]]
+    for ax in unused_axis:
+      axss[ax[0], ax[1]].axis("off")
+
+
+    for i, ax in enumerate(axss[:, 0]):
+      letter = chr(ord("a")+i)
+      ax.annotate(
+            f" ({letter})",
+            xy=(0, 1), xycoords='axes fraction',
+            xytext=(+0.5, -0.5), textcoords='offset fontsize',
+            fontsize='medium', verticalalignment='top', fontfamily='serif',
+            bbox=dict(facecolor=(1,1,1,0.8), edgecolor='none', pad=2.0))
+
     plt.savefig("out/ThreePole.pdf", dpi=1200)
 
     # # %%
@@ -418,8 +440,8 @@ if __name__ == "__main__":
     # %matplotlib widget
 
     oscs = [1, 0.1, 0.05, 0.025]
-    plot_domain2 = [1.6-0.14j, 1.82] #+0.05j]
-    plot_domain1 = [1.3-0.14j, 2.2] #+0.05j]
+    plot_domain2 = [1.6-0.15j, 1.82] #+0.05j]
+    plot_domain1 = [1.3-0.15j, 2.2] #+0.05j]
 
     thickness_color_ranges = [[0.19, 0.235], [0,0.4]]
     thresh = 1
@@ -428,7 +450,7 @@ if __name__ == "__main__":
         2, len(oscs)+3, sharex="col",
         figsize=(180*mm,60*mm), 
         #constrained_layout=True, 
-        width_ratios=[1,1,1,0.06, 0.08,1,0.06], #([1]*2 + [0.06])*2
+        width_ratios=[1.4,1,1,0.06, 0.08,1,0.06], #([1]*2 + [0.06])*2
         height_ratios=[1, 0.6]
         )
 
@@ -477,7 +499,7 @@ if __name__ == "__main__":
   
     ## plot inset 2
     axins = axss[0,0].inset_axes(
-      [0.6, 0.45, 0.55, 0.33],
+      [0.65, 0.45, 0.5, 0.33],
       xlim=(1.705, 1.713),
       ylim=(-0.0115, -0.0108),
       xticklabels=[], yticklabels=[]
@@ -508,6 +530,17 @@ if __name__ == "__main__":
 
       axins.scatter(real, imag, edgecolor='none', s=1, c=colors_interp, rasterized=True)
       add_arrow_head(real, imag, 0.0001, np.pi/16, colors_interp, ax = axins)
+
+      poi_labels = {3: "FP", 0: "M"}
+      thickness_pts = [0.2, 0.21, 0.22]
+      if i in poi_labels:
+        real_labels = np.interp(thickness_pts, thickness, pole.real)
+        imag_labels = np.interp(thickness_pts, thickness, pole.imag)
+        axss[0,0].scatter(real_labels, imag_labels, marker="v", zorder=12, color="k")
+        for j, (re, im) in enumerate(zip(real_labels, imag_labels)):
+          if poi_labels[i] == "M":
+            re += 0.01 * (j-1)
+          axss[0,0].annotate(f"{poi_labels[i]}{j+1}", (re, im-0.01), fontsize=6, va='top', ha='center')
 
     e_r = np.linspace(1.7, 1.72, 51)
     e_i = np.linspace(-0.013, -0.009, 31)
@@ -588,5 +621,26 @@ if __name__ == "__main__":
 
     print("Start Rendering")
     plt.savefig("out/OscReduction.pdf", dpi=1200)
+
+# %%
+plt.figure()
+
+npoles = 1
+scale_osc = 0.025
+scale_damping = 1
+poles, residues, thickness, material_poles = load_data(
+  npoles, scale_osc, scale_damping, domain
+)
+poles_tracked, residues_tracked = track_qnms(poles, residues)
+mask = thickness < 0.4
+poles_tracked = poles_tracked[mask]
+residues_tracked = residues_tracked[mask]
+thickness = thickness[mask]
+
+
+for i, pole in enumerate(poles_tracked.T):
+  plt.plot(pole.real, pole.imag)
+  idx = np.argmax(np.isfinite(pole))
+  plt.annotate(f"p{i}", (pole.real[idx], pole.imag[idx]), fontsize=5)
 
 # %%
