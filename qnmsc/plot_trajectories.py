@@ -384,9 +384,9 @@ if __name__ == "__main__":
     # %%
     fig, axss = plt.subplots(
         3, 3, sharex="col",
-        figsize=(90*mm,60*mm),  
+        figsize=(90*mm,70*mm),  
         width_ratios=[1,0.03,0.03],
-        height_ratios=[0.4, 1, 0.6], constrained_layout=True
+        height_ratios=[0.6, 1, 0.6], constrained_layout=True
     )
     
     e_r = np.linspace(domain[0].real, domain[1].real, 1200)
@@ -538,7 +538,7 @@ if __name__ == "__main__":
       add_arrow_head(real, imag, 0.0001, np.pi/16, [color]*len(colors_interp), ax = axins)
 
       poi_labels = {3: "FP", 0: "M"}
-      thickness_pts = [0.2, 0.2095, 0.22]
+      thickness_pts = [0.2, 0.209, 0.22]
       if i in poi_labels:
         real_labels = np.interp(thickness_pts, thickness, pole.real)
         imag_labels = np.interp(thickness_pts, thickness, pole.imag)
@@ -546,7 +546,11 @@ if __name__ == "__main__":
         for j, (re, im) in enumerate(zip(real_labels, imag_labels)):
           if poi_labels[i] == "M":
             re += 0.01 * (j-1)
-          axss[0,0].annotate(f"{poi_labels[i]}{j+1}", (re, im-0.01), fontsize=6, va='top', ha='center')
+            im -= 0.02
+            va = 'top'
+          else:
+            va = 'bottom'
+          axss[0,0].annotate(f"{poi_labels[i]}{j+1}", (re, im+0.01), fontsize=6, va=va , ha='center')
 
     e_r = np.linspace(1.7, 1.72, 51)
     e_i = np.linspace(-0.013, -0.009, 31)
@@ -629,24 +633,31 @@ if __name__ == "__main__":
     plt.savefig("out/OscReduction.pdf", dpi=1200)
 
 # %%
-plt.figure()
+# poles, residues, thickness, material_poles = load_data(
+#   1, 1, 1, domain
+# )
+# axss[0,0].axvline(material_poles[0].real)
 
-npoles = 1
-scale_osc = 0.025
+# %%
+plt.figure()
+npoles = 0
+scale_osc = 1
 scale_damping = 1
 poles, residues, thickness, material_poles = load_data(
   npoles, scale_osc, scale_damping, domain
 )
 poles_tracked, residues_tracked = track_qnms(poles, residues)
-mask = thickness < 10#0.4
+mask = thickness < 0.4
 poles_tracked = poles_tracked[mask]
 residues_tracked = residues_tracked[mask]
 thickness = thickness[mask]
 
+pole = poles_tracked.T[0]
 
-for i, pole in enumerate(poles_tracked.T):
-  plt.plot(pole.real, pole.imag)
-  idx = np.argmax(np.isfinite(pole))
-  plt.annotate(f"p{i}", (pole.real[idx], pole.imag[idx]), fontsize=5)
+for ax in axss[0][np.array([0,1,2,5])]:
+  plt.sca(ax)
+  plt.plot(pole.real, pole.imag, "--", color="grey")
+
+plt.savefig("out/OscReduction_with_cav.pdf", dpi=1200)
 
 # %%
