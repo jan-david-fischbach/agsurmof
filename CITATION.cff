@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Fischbach
+    given-names: Jan David
+    orcid: https://orcid.org/0009-0003-8765-8920
+title: "Source Code and Simulation Results: Quasinormal modes reveal strong light-matter coupling in nanophotonic resonators"
+version: 0.0.1
+date-released: 2025-10-01
+url: "https://github.com/tfp-photonics/agsurmof"
