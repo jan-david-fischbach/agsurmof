@@ -632,32 +632,32 @@ if __name__ == "__main__":
     print("Start Rendering")
     plt.savefig("out/OscReduction.pdf", dpi=1200)
 
-# %%
-# poles, residues, thickness, material_poles = load_data(
-#   1, 1, 1, domain
-# )
-# axss[0,0].axvline(material_poles[0].real)
+    # %%
+    # poles, residues, thickness, material_poles = load_data(
+    #   1, 1, 1, domain
+    # )
+    # axss[0,0].axvline(material_poles[0].real)
 
-# %%
-plt.figure()
-npoles = 0
-scale_osc = 1
-scale_damping = 1
-poles, residues, thickness, material_poles = load_data(
-  npoles, scale_osc, scale_damping, domain
-)
-poles_tracked, residues_tracked = track_qnms(poles, residues)
-mask = thickness < 0.4
-poles_tracked = poles_tracked[mask]
-residues_tracked = residues_tracked[mask]
-thickness = thickness[mask]
+    # %%
+    plt.figure()
+    npoles = 0
+    scale_osc = 1
+    scale_damping = 1
+    poles, residues, thickness, material_poles = load_data(
+      npoles, scale_osc, scale_damping, domain
+    )
+    poles_tracked, residues_tracked = track_qnms(poles, residues)
+    mask = thickness < 0.4
+    poles_tracked = poles_tracked[mask]
+    residues_tracked = residues_tracked[mask]
+    thickness = thickness[mask]
 
-pole = poles_tracked.T[0]
+    pole = poles_tracked.T[0]
 
-for ax in axss[0][np.array([0,1,2,5])]:
-  plt.sca(ax)
-  plt.plot(pole.real, pole.imag, "--", color="grey")
+    for ax in axss[0][np.array([0,1,2,5])]:
+      plt.sca(ax)
+      plt.plot(pole.real, pole.imag, "--", color="grey")
 
-plt.savefig("out/OscReduction_with_cav.pdf", dpi=1200)
+    plt.savefig("out/OscReduction_with_cav.pdf", dpi=1200)
 
-# %%
+    # %%
