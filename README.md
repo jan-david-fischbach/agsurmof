@@ -1,6 +1,6 @@
 # Surface Metal Organic Framework Cavity
 
-This is a repository of the code that was used to generate the figures in [^1]
+This is a repository of the code that was used to generate the figures in [*Resonant states reveal strong light-matter coupling in nanophotonic cavities*](https://arxiv.org/abs/2511.03468)
 To reproduce the figures please run the respective plot script from the root directory.
 
 We use `uv` to make dependency management convenient and reproducible. Make sure `uv` is installed. Then run 
@@ -50,4 +50,3 @@ WIP: Will be added soon
 
 ## Solving the inverse eigenproblem
 If access to the resonant state fields is not available one can phenomenologically extract the coupling coefficients from the resonance frequencies alone. The procedure is explained in the SI. The implementation can be found in `qnmsc/inverse_eigenproblem.py`
-
