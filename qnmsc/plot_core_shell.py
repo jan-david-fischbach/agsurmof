@@ -217,7 +217,8 @@ def planar_analogous(osc_strength, axs, plot_domain = [1.25-0.6j, 2.25+0.05j], c
           xy=(0, 1), xycoords='axes fraction',
           xytext=(+0.5, -0.5), textcoords='offset fontsize',
           fontsize='medium', verticalalignment='top', fontfamily='serif',
-          bbox=dict(facecolor=(1,1,1,0.8), edgecolor='none', pad=2.0))
+          # bbox=dict(facecolor=(1,1,1,0.8), edgecolor='none', pad=2.0)
+      )
     axs_idx += 1
 
   axs[1].spines[['bottom']].set_visible(False)
@@ -248,7 +249,9 @@ background_data['poles']*k0_to_eV
 to_eV(calc_material_poles(1, 1))
 
 # %%
-fig, axs = plt.subplots(3, 5, sharey="row", figsize=(180*mm,70*mm), sharex='col', height_ratios=[1, 1.5, 0.5], width_ratios=[1]*4+[0.15]) #constrained_layout=True,
+#figsize = (180*mm,70*mm)
+figsize = (120*mm,45*mm)
+fig, axs = plt.subplots(3, 5, sharey="row", figsize=figsize, sharex='col', height_ratios=[1, 1.5, 0.5], width_ratios=[1]*4+[0.4]) #constrained_layout=True,
 
 
 # plot_domain2 = [[1.6-0.1199j, 1.85+0.02j], [1.6-0.53j, 1.85-0.4801j]]
@@ -267,16 +270,16 @@ for i, osc_strength in enumerate([0.01, 0.025, 0.05, 1]):
   axs[0, i].set_title(f"$\eta$ = {osc_strength:.3f}")
 
 cbar_ax = axs[1, -1]
-cbar = plt.colorbar(ax=cbar_ax, mappable=mappable, fraction=1, label=rf'$r_\mathrm{{core}}$ [{um}]')
+cbar = plt.colorbar(ax=cbar_ax, mappable=mappable, fraction=1, shrink=1.2, label=rf'$r_\mathrm{{core}}$ ({um})')
 
 # axs[0, 0].set_title(f"$\eta$: {list(mode_to_color.keys())[-1]**2:.2f}")
 
-axs[1, 0].set_ylabel(r"$\Im\{\hbar \tilde \omega\}$ [eV]")
+axs[1, 0].set_ylabel(r"$\Im\{\hbar \tilde \omega\}$ (eV)")
 axs[1, 0].yaxis.label.set_position((-0.2, 0.25))
 
-axs[0, 0].set_ylabel(rf'$r_\mathrm{{core}}$ [{um}]')
+axs[0, 0].set_ylabel(rf'$r_\mathrm{{core}}$ ({um})')
 
-fig.supxlabel(r'$\Re\{\hbar \tilde \omega\}$ [eV]', y=0.06)
+fig.supxlabel(r'$\Re\{\hbar \tilde \omega\}$ (eV)', y=0.09)
 fig.align_ylabels()
 
 axs[0, 0].set_ylim(0.05, 0.35)
@@ -289,7 +292,7 @@ axs[2, 0].yaxis.set_major_locator(ticker.MultipleLocator(base=0.05))  # y-axis t
 axs[2, 0].yaxis.set_minor_locator(ticker.MultipleLocator(base=0.01))
 
 plt.tight_layout()
-fig.subplots_adjust(hspace=0.08)
+fig.subplots_adjust(hspace=0.08, wspace=0.05)
 
 pos = cbar.ax.get_position()  # get current position
 new_pos = [pos.x0, pos.y0 - 0.05, pos.width, pos.height]  # y0 shifted up
