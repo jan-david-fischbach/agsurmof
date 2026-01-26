@@ -176,7 +176,7 @@ def planar_analogous(osc_strength, axs, plot_domain = [1.25-0.6j, 2.25+0.05j], c
   colors_interp = cmap(thickness_color_norm(interp_d))
 
   for i in [1, 0]:
-    plt.sca(axs[i])
+    plt.sca(axs[i+1])
     plt.xlim(plot_domain[i][0].real, plot_domain[i][1].real)
     plt.ylim(plot_domain[i][0].imag, plot_domain[i][1].imag)
 
@@ -196,7 +196,7 @@ def planar_analogous(osc_strength, axs, plot_domain = [1.25-0.6j, 2.25+0.05j], c
     facecolors='none', edgecolors="k", linewidths=1
   )
 
-  plt.sca(axs[2])
+  plt.sca(axs[0])
 
   for pol in [1]:
     for l in [1,2]:
@@ -207,23 +207,24 @@ def planar_analogous(osc_strength, axs, plot_domain = [1.25-0.6j, 2.25+0.05j], c
           color = 'gray'
         plot_real_trajectory(pol, l, mode, suffix=suffix, color=color)
 
-
+  axs_idx = 0
   for i, ax in enumerate(axs):
-    if i==1:
+    if i==2:
       continue
-    letter = chr(ord("a")+i//2)
+    letter = chr(ord("a")+axs_idx)
     ax.annotate(
           f" ({letter}{label_suffix})",
           xy=(0, 1), xycoords='axes fraction',
           xytext=(+0.5, -0.5), textcoords='offset fontsize',
           fontsize='medium', verticalalignment='top', fontfamily='serif',
           bbox=dict(facecolor=(1,1,1,0.8), edgecolor='none', pad=2.0))
+    axs_idx += 1
 
-  axs[0].spines[['bottom']].set_visible(False)
-  axs[0].get_xaxis().tick_top()
+  axs[1].spines[['bottom']].set_visible(False)
+  axs[1].get_xaxis().tick_top()
 
-  axs[1].spines[['top']].set_visible(False)
-  axs[1].get_xaxis().tick_bottom()
+  axs[2].spines[['top']].set_visible(False)
+  axs[2].get_xaxis().tick_bottom()
 
   mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=thickness_color_norm)
   return mappable
@@ -247,7 +248,7 @@ background_data['poles']*k0_to_eV
 to_eV(calc_material_poles(1, 1))
 
 # %%
-fig, axs = plt.subplots(3, 5, sharey="row", figsize=(180*mm,70*mm), sharex='col', height_ratios=[1.5, 0.5, 1], width_ratios=[1]*4+[0.15]) #constrained_layout=True,
+fig, axs = plt.subplots(3, 5, sharey="row", figsize=(180*mm,70*mm), sharex='col', height_ratios=[1, 1.5, 0.5], width_ratios=[1]*4+[0.15]) #constrained_layout=True,
 
 
 # plot_domain2 = [[1.6-0.1199j, 1.85+0.02j], [1.6-0.53j, 1.85-0.4801j]]
@@ -265,27 +266,27 @@ for i, osc_strength in enumerate([0.01, 0.025, 0.05, 1]):
   )
   axs[0, i].set_title(f"$\eta$ = {osc_strength:.3f}")
 
-cbar_ax = axs[0, -1]
+cbar_ax = axs[1, -1]
 cbar = plt.colorbar(ax=cbar_ax, mappable=mappable, fraction=1, label=rf'$r_\mathrm{{core}}$ [{um}]')
 
 # axs[0, 0].set_title(f"$\eta$: {list(mode_to_color.keys())[-1]**2:.2f}")
 
-axs[0, 0].set_ylabel(r"$\Im\{\hbar \tilde \omega\}$ [eV]")
-axs[0, 0].yaxis.label.set_position((-0.2, 0.25))
+axs[1, 0].set_ylabel(r"$\Im\{\hbar \tilde \omega\}$ [eV]")
+axs[1, 0].yaxis.label.set_position((-0.2, 0.25))
 
-axs[2, 0].set_ylabel(rf'$r_\mathrm{{core}}$ [{um}]')
+axs[0, 0].set_ylabel(rf'$r_\mathrm{{core}}$ [{um}]')
 
 fig.supxlabel(r'$\Re\{\hbar \tilde \omega\}$ [eV]', y=0.06)
 fig.align_ylabels()
 
-axs[2, 0].set_ylim(0.05, 0.35)
+axs[0, 0].set_ylim(0.05, 0.35)
 
 d = .5  # proportion of vertical to horizontal extent of the slanted line
 kwargs = dict(marker=[(-1, -d), (1, d)], markersize=6,
               linestyle="none", color='k', mec='k', mew=0.5, clip_on=False)
 
-axs[1, 0].yaxis.set_major_locator(ticker.MultipleLocator(base=0.05))  # y-axis ticks at multiples of 0.05
-axs[1, 0].yaxis.set_minor_locator(ticker.MultipleLocator(base=0.01))
+axs[2, 0].yaxis.set_major_locator(ticker.MultipleLocator(base=0.05))  # y-axis ticks at multiples of 0.05
+axs[2, 0].yaxis.set_minor_locator(ticker.MultipleLocator(base=0.01))
 
 plt.tight_layout()
 fig.subplots_adjust(hspace=0.08)
@@ -301,13 +302,13 @@ for ax in axs.flatten():
 for ax in axs[:, -1]:
   ax.axis('off')
 
-for ax in axs[1]:
+for ax in axs[2]:
   pos = ax.get_position()
   ax.set_position([pos.x0, pos.y0 + 0.01, pos.width, pos.height])
 
 for axs in axs.T[:-1]:
-  axs[0].plot([0, 1], [0, 0], transform=axs[0].transAxes, **kwargs)
-  axs[1].plot([0, 1], [1, 1], transform=axs[1].transAxes, **kwargs)
+  axs[1].plot([0, 1], [0, 0], transform=axs[1].transAxes, **kwargs)
+  axs[2].plot([0, 1], [1, 1], transform=axs[2].transAxes, **kwargs)
 
 
 plt.savefig('out/CoreShell.pdf', dpi=1200, bbox_inches='tight')

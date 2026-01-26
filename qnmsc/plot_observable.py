@@ -9,7 +9,7 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.16.7
 #   kernelspec:
-#     display_name: .venv
+#     display_name: qnmsc (3.11.10)
 #     language: python
 #     name: python3
 # ---
@@ -29,7 +29,7 @@ import qnmsc.mpl_config
 qnmsc.mpl_config.config()
 
 # %%
-hbar_omega = np.linspace(1.2, 2.3, 401)
+hbar_omega = np.linspace(1.2, 2.3, 801)
 resonant_cavity_thickness = 1/4.780315
 domain = [1-0.5j, 2.5+0.05j]
 
@@ -48,6 +48,9 @@ for i, scale_osc in enumerate(s_oscs):
   gs.append(np.sqrt(np.abs(Cs[np.argmin(np.abs(param_interp - resonant_cavity_thickness))][0])))
 
 
+
+# %%
+# %matplotlib widget
 
 # %%
 fig, axss = plt.subplots(3, 5, figsize=(180*mm, 80*mm), sharey="row", sharex="col", constrained_layout=True, width_ratios=[1,1,1,1,0.06], height_ratios=[1, 0.8, 0.8])
@@ -146,18 +149,6 @@ for i, scale_osc in enumerate([0.025, 0.05, 0.1, 1]):
 
   plt.tick_params(which='both', color="white")
 
-
-# axs=axss[0]
-# for i, factor in enumerate(factors):
-#   if factor == 1:
-#     continue
-
-#plt.plot(range(5), range(5), 'ro', markersize=20, clip_on=False, zorder=100)
-
-#   axs[i].plot([1.9, 2], [0.39, 0.39],   alpha=0.4, color='C0')
-#   axs[i].plot([1.9, 2], [0.41, 0.41], alpha=0.4, color='C1')
-#   axs[i].text(2.05, 0.4, f"x{factor:.2f}", va="center")
-
 for i, axs in enumerate(axss.T[:-1]):
   for j, ax in enumerate(axs):
     letter = chr(ord("a")+j)
@@ -185,7 +176,7 @@ pos = ax.get_position()
 #ax.set_position([pos.x0+0.7, pos.y0, pos.width, pos.height])
 ax.set_position([pos.x0+0.07, pos.y0+0.01, pos.width, pos.height])
 
-fig.supxlabel(r"$\hbar \omega$ [eV]")
+fig.supxlabel(r"Photon energy $\hbar \omega$ [eV]")
 plt.savefig("out/OscReductionObservable.pdf", bbox_inches='tight', dpi=1600)
 
 # %%

@@ -218,7 +218,7 @@ if __name__ == "__main__":
   my_cmap = ListedColormap(my_cmap)
 
   plt.pcolormesh(1/T, E, np.abs(smat['in', 'out'])**2, zorder=-2, rasterized=True, shading='gouraud', cmap=my_cmap)
-  cbar = plt.colorbar(label="Transmissivity")
+  cbar = plt.colorbar(label="Transmission")
 
   poles, residues, thickness_0pole, _ = load_data(
     0, 1, 1, domain0

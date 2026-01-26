@@ -218,7 +218,7 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
   unit = "eV", axs=None, cbar=True, labels=True, plot_neg_eps_r=False, d_limit=np.inf, 
   color_thickness=False, num_modes = 4, upsample=10, label_suffix="", 
   thickness_color_norm=None, eps_background=True, linewidth_modes=[], 
-  arrows=False, arrow_head_angle=np.pi/16, arrow_head_length=0.003, 
+  arrows=False, arrow_head_angle=np.pi/16, arrow_head_length=0.003, projection_at_top=False
   ):
 
   c_ = unit_conversion[unit]
@@ -237,7 +237,13 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
     )
   else:
     fig = plt.gcf()
-  plt.sca(axs[0])
+
+  if projection_at_top:
+    ax_cplx, ax_proj = axs[1], axs[0]
+  else:
+    ax_cplx, ax_proj = axs[0], axs[1]
+
+  plt.sca(ax_cplx)
 
   # hbar_omega is the photon energy
   # as such it is denoted as e and E for brevity
@@ -300,17 +306,18 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
       add_arrow_head(c_(real), c_(imag), arrow_head_length, arrow_head_angle, colors_interp)
 
   if labels:
-    plt.ylabel(f"$\Im\{{{q_}\}}$ [{u_}]")
+    ax_cplx.set_ylabel(f"$\Im\{{{q_}\}}$ [{u_}]")
 
   plt.axhline(0, color="k", lw=0.4)
   # Negative Real Eps regions
   if plot_neg_eps_r:
+    plt.sca(ax_proj)
     plt.fill_between(c_(e_r), 0, 1, hatch="\\\\\\", where=eps_r.real<0, color="none", edgecolor="k", transform=plt.gca().get_xaxis_transform(), lw=0.5)
 
-    plt.sca(axs[1])
+    plt.sca(ax_cplx)
     plt.fill_between(c_(e_r), 0, 1, hatch="\\\\\\", where=eps_r.real<0, color="none", edgecolor="k", transform=plt.gca().get_xaxis_transform(), lw=0.5, zorder=5)
-  else:
-    plt.sca(axs[1])
+  
+  plt.sca(ax_proj)
 
   
   all_modes = np.array(range(len(poles_tracked.T)), dtype=int)
@@ -333,7 +340,7 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
       if i in linewidth_modes:
         plt.fill_betweenx(interp_d, 
           c_(real-imag), c_(real+imag), 
-          color=[0.9,0.9,0.9],
+          color=[0.93,0.93,0.93],
           zorder=-2
         )
           
@@ -342,7 +349,7 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
       c0_rgba = mcolors.to_rgba(f"C{i-1}")
       c0_hsv = colorsys.rgb_to_hsv(*c0_rgba[:3])
 
-      sat = (((npoles)-j)/(npoles) - 1)*0.8 + 1
+      sat = (((npoles)-j)/(npoles) - 1)*0.1 + 1
       if i > 1:
         sat *= 0.5
       new_saturation = c0_hsv[1] * sat
@@ -368,8 +375,8 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
 
 
   if labels:
-    plt.ylabel(f"$d$ [{um}]")
-    plt.xlabel(f"$\Re\{{{q_}\}}$ [{u_}]")
+    ax_proj.set_ylabel(f"$d$ [{um}]")
+    axs[1].set_xlabel(f"$\Re\{{{q_}\}}$ [{u_}]")
     fig.align_ylabels()
 
   return pcm, cmap, thickness_color_norm
@@ -454,8 +461,8 @@ if __name__ == "__main__":
         2, len(oscs)+3, sharex="col",
         figsize=(180*mm,60*mm), 
         #constrained_layout=True, 
-        width_ratios=[1.4,1,1,0.06, 0.08,1,0.06], #([1]*2 + [0.06])*2
-        height_ratios=[1, 0.6]
+        width_ratios=[1.4,1,1,0.06,0.12,1,0.06], #([1]*2 + [0.06])*2
+        height_ratios=[0.8, 1]
         )
 
     suffix = 1
@@ -472,19 +479,23 @@ if __name__ == "__main__":
           upsample=10, label_suffix = suffix,
           thickness_color_norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax),
           eps_background=False, linewidth_modes=[1], arrows=True, 
-          arrow_head_angle=np.pi/16 if osc==1 else np.pi/10
+          arrow_head_angle=np.pi/16 if osc==1 else np.pi/10,
+          projection_at_top=True
       )
       suffix += 1
       axs[0].set_title(rf"$\eta = \num{{{osc:.3f}}}$")
       norms.append(norm)
 
     ## plot inset 1
-    axins = axss[1,1].inset_axes(
-      [0.55, 0.09, 0.4, 0.32],
+    axins = axss[0,1].inset_axes(
+      [0.58, -0.09, 0.6, 0.48],
       xlim=(1.73, 1.74),
       ylim=(0.205, 0.23),
       xticklabels=[], yticklabels=[]
     )
+
+    axss[0,1].set_zorder(5)
+    axins.set_zorder(6)
 
     npoles = 1
     scale_osc = 0.05
@@ -499,16 +510,16 @@ if __name__ == "__main__":
     axins.tick_params(axis='y', which='minor', left=False, right=False)
     
     # Draw the indicator or zoom lines.
-    axss[1,1].indicate_inset_zoom(axins, edgecolor="black")
+    axss[0,1].indicate_inset_zoom(axins, edgecolor="black")
   
     ## plot inset 2
-    axins = axss[0,0].inset_axes(
+    axins = axss[1,0].inset_axes(
       [0.65, 0.45, 0.5, 0.33],
       xlim=(1.705, 1.713),
       ylim=(-0.0115, -0.0108),
       xticklabels=[], yticklabels=[]
     )
-    axss[0,0].set_zorder(5)
+    axss[1,0].set_zorder(5)
     axins.set_zorder(6)
 
     npoles = 1
@@ -542,7 +553,7 @@ if __name__ == "__main__":
       if i in poi_labels:
         real_labels = np.interp(thickness_pts, thickness, pole.real)
         imag_labels = np.interp(thickness_pts, thickness, pole.imag)
-        axss[0,0].scatter(real_labels, imag_labels, marker="v", zorder=12, color="k")
+        axss[1,0].scatter(real_labels, imag_labels, marker="v", zorder=12, color="k")
         for j, (re, im) in enumerate(zip(real_labels, imag_labels)):
           if poi_labels[i] == "M":
             re += 0.01 * (j-1)
@@ -550,7 +561,7 @@ if __name__ == "__main__":
             va = 'top'
           else:
             va = 'bottom'
-          axss[0,0].annotate(f"{poi_labels[i]}{j+1}", (re, im+0.01), fontsize=6, va=va , ha='center')
+          axss[1,0].annotate(f"{poi_labels[i]}{j+1}", (re, im+0.01), fontsize=6, va=va , ha='center')
 
     e_r = np.linspace(1.7, 1.72, 51)
     e_i = np.linspace(-0.013, -0.009, 31)
@@ -573,29 +584,29 @@ if __name__ == "__main__":
     )
 
     # Draw the indicator or zoom lines.
-    axss[0,0].indicate_inset_zoom(axins, edgecolor="black")
+    axss[1,0].indicate_inset_zoom(axins, edgecolor="black")
 
     ## colorbars etc.
     if len(norms) < 4:
       norms = [norms[0]]*4
-    axss[1,0].set_ylim(0, 0.4)
+    axss[0,0].set_ylim(0.01, 0.4)
 
     shrink=0.8
     mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norms[1])
-    cb = fig.colorbar(mappable, cax=axss[0, 3], shrink=shrink)
+    cb = fig.colorbar(mappable, cax=axss[1, 3], shrink=shrink)
     #cb.set_label(f"$d$ [{um}]", labelpad=-10)
     cb.ax.set_title(f"$d$ [{um}]", loc='left')
     cb.ax.zorder = -1
 
     mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norms[3])
-    cb = fig.colorbar(mappable, cax=axss[0, -1], shrink=shrink)
+    cb = fig.colorbar(mappable, cax=axss[1, -1], shrink=shrink)
     cb.ax.set_title(f"$d$ [{um}]", loc='left')
     cb.ax.zorder = -1
 
     #axss[0,0].set_title(f"$\eta$ = {oscs[-1]}")
     fig.supxlabel(f"$\Re\{{{qty_str[unit]}\}}$ [{unit}]", y=0.08)
-    axss[0,0].set_ylabel(f"$\Im\{{{qty_str[unit]}\}}$ [{unit}]")
-    axss[1,0].set_ylabel(f"$d$ [{um}]")
+    axss[1,0].set_ylabel(f"$\Im\{{{qty_str[unit]}\}}$ [{unit}]")
+    axss[0,0].set_ylabel(f"$d$ [{um}]")
 
     fig.align_ylabels()
 
@@ -605,26 +616,11 @@ if __name__ == "__main__":
       axs[1].sharey(axss[1,0])
       axs[1].tick_params(axis='y',labelleft=False)
 
-    axss[1, 3].axis("off")
-    axss[1, 6].axis("off")
+    axss[0, 3].axis("off")
+    axss[0, 6].axis("off")
 
     axss[0, 4].axis("off")
     axss[1, 4].axis("off")
-
-
-    # zorder_indicators = 0
-    # axesB = [
-    #   [axss[0, 0], axss[0, 2]],
-    #   [axss[0, 4], axss[0, 4]],
-    # ]
-    # for i_cbar in range(2):
-    #   for corner in range(2):
-    #     con = ConnectionPatch(
-    #       (corner, thickness_color_ranges[i_cbar][corner]),
-    #       (corner, corner),
-    #       coordsA='data', coordsB='axes fraction', axesA=axss[1, -1 if i_cbar else 3], axesB=axesB[i_cbar][corner],
-    #       zorder=zorder_indicators)
-    #     fig.add_artist(con)
 
     plt.tight_layout()
     plt.subplots_adjust(hspace=0.05, wspace=0.1)
@@ -654,10 +650,10 @@ if __name__ == "__main__":
 
     pole = poles_tracked.T[0]
 
-    for ax in axss[0][np.array([0,1,2,5])]:
+    for ax in axss[1][np.array([0,1,2,5])]:
       plt.sca(ax)
       plt.plot(pole.real, pole.imag, "--", color="grey")
 
     plt.savefig("out/OscReduction_with_cav.pdf", dpi=1200)
 
-    # %%
+# %%

@@ -159,7 +159,7 @@ plt.xlim(xlim)
 plt.ylim(ylim)
 
 for ax in axs[:, 1]:
-  ax.set_ylabel(r"$\omega$")
+  ax.set_ylabel(r"Frequency $\omega$")
   ax.spines['left'].set_visible(False)
   ax.axvline(0, color="k", lw=0.5)
   #axs[i, -1].yaxis.set_label_position("right")
