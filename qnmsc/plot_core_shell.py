@@ -250,7 +250,7 @@ to_eV(calc_material_poles(1, 1))
 
 # %%
 #figsize = (180*mm,70*mm)
-figsize = (120*mm,45*mm)
+figsize = (140*mm,50*mm)
 fig, axs = plt.subplots(3, 5, sharey="row", figsize=figsize, sharex='col', height_ratios=[1, 1.5, 0.5], width_ratios=[1]*4+[0.4]) #constrained_layout=True,
 
 
