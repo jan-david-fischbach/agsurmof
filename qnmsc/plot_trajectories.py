@@ -185,6 +185,8 @@ def size(res, imag):
   return s
 
 def add_arrow_head(real, imag, length, arrow_head_angle, colors_interp, ax=None):
+  if not np.any(np.isfinite(real)):
+    return
 
   if ax is None:
     ax = plt.gca()
@@ -218,7 +220,8 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
   unit = "eV", axs=None, cbar=True, labels=True, plot_neg_eps_r=False, d_limit=np.inf, 
   color_thickness=False, num_modes = 4, upsample=10, label_suffix="", 
   thickness_color_norm=None, eps_background=True, linewidth_modes=[], 
-  arrows=False, arrow_head_angle=np.pi/16, arrow_head_length=0.003, projection_at_top=False
+  arrows=False, arrow_head_angle=np.pi/16, arrow_head_length=0.003, projection_at_top=False, 
+  limit_thickness=np.inf
   ):
 
   c_ = unit_conversion[unit]
@@ -295,6 +298,9 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
     thickness_color_norm = mpl.colors.Normalize(vmin=min(interp_d), vmax=max(interp_d))
   colors_interp = cmap(thickness_color_norm(interp_d))
 
+  mask = interp_d<=limit_thickness
+  interp_d = interp_d[mask]
+  colors_interp = colors_interp[mask]
   # Plot Trajectories
   all_modes = []
   for i in range(1, num_modes+1)[::-1]:
@@ -309,7 +315,7 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
     imag = np.interp(interp_d, thickness, pole.imag)
     s = size(np.interp(interp_d, thickness, np.abs(res)), imag)
     plt.scatter(c_(real), c_(imag), c=colors_interp, edgecolor='none', s=s, rasterized=True)
-    print(np.nanmax(np.abs(res)))
+
     if arrows and np.nanmax(np.abs(res))>5e-3:
       add_arrow_head(c_(real), c_(imag), arrow_head_length, arrow_head_angle, colors_interp)
 
@@ -367,7 +373,7 @@ def plot_trajectories(npoles, scale_osc, scale_damping, domain,
       else:
         plt.scatter(c_(real), interp_d, color=new_rgba, edgecolor='none', s=s, rasterized=True)
 
-  plt.ylim(0, np.nanmax(interp_d))
+  plt.ylim(0, min(max(thickness), d_limit))
   plt.xlim(min(c_(e_r)), max(c_(e_r)))
 
   # for i, ax in enumerate(axs):
@@ -395,51 +401,51 @@ if __name__ == "__main__":
     # plt.savefig("out/SinglePole.pdf", dpi=1200)
 
     # %%
-    fig, axss = plt.subplots(
-        3, 3, sharex="col",
-        figsize=(90*mm,70*mm),  
-        width_ratios=[1,0.03,0.03],
-        height_ratios=[0.6, 1, 0.6], constrained_layout=True
-    )
+    # fig, axss = plt.subplots(
+    #     3, 3, sharex="col",
+    #     figsize=(90*mm,70*mm),  
+    #     width_ratios=[1,0.03,0.03],
+    #     height_ratios=[0.6, 1, 0.6], constrained_layout=True
+    # )
     
-    e_r = np.linspace(domain[0].real, domain[1].real, 1200)
-    eps_r = eps_surmof(e_r, 3, 1, 1)
-    plt.sca(axss[0, 0])
-    plt.plot(e_r, eps_r.real, color="gray", label=r"$\Re\{\varepsilon_\mathrm{r}\}$")
-    plt.plot(e_r, eps_r.imag, color="k", label=r"$\Im\{\varepsilon_\mathrm{r}\}$")
-    plt.legend(loc="upper right", fontsize=6, frameon=True)
-    plt.ylabel(r"$\varepsilon_\mathrm{r}$")
+    # e_r = np.linspace(domain[0].real, domain[1].real, 1200)
+    # eps_r = eps_surmof(e_r, 3, 1, 1)
+    # plt.sca(axss[0, 0])
+    # plt.plot(e_r, eps_r.real, color="gray", label=r"$\Re\{\varepsilon_\mathrm{r}\}$")
+    # plt.plot(e_r, eps_r.imag, color="k", label=r"$\Im\{\varepsilon_\mathrm{r}\}$")
+    # plt.legend(loc="upper right", fontsize=6, frameon=True)
+    # plt.ylabel(r"$\varepsilon_\mathrm{r}$")
 
-    plt.fill_between(e_r, 0, 1, hatch="\\\\\\", where=eps_r.real<0, color="none", edgecolor="k", transform=plt.gca().get_xaxis_transform(), lw=0.5)
+    # plt.fill_between(e_r, 0, 1, hatch="\\\\\\", where=eps_r.real<0, color="none", edgecolor="k", transform=plt.gca().get_xaxis_transform(), lw=0.5)
 
-    pcm, cmap, norm = plot_trajectories(
-      3, 1, 1, domain, unit=unit, 
-      plot_neg_eps_r=True, axs=axss[1:,0], plot_domain=[1.5-0.06j, 2.1], 
-      upsample=10, cbar=False, arrows=True
-    )
+    # pcm, cmap, norm = plot_trajectories(
+    #   3, 1, 1, domain, unit=unit, 
+    #   plot_neg_eps_r=True, axs=axss[1:,0], plot_domain=[1.5-0.06j, 2.1], 
+    #   upsample=10, cbar=False, arrows=True
+    # )
 
-    plt.xlim(1.5, 2.1)
-    mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
-    cb = plt.colorbar(mappable, cax=axss[1, 1], label=f"$d$ [{um}]")
+    # plt.xlim(1.5, 2.1)
+    # mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
+    # cb = plt.colorbar(mappable, cax=axss[1, 1], label=f"$d$ [{um}]")
 
-    cb = plt.colorbar(pcm, cax=axss[1, 2], label="$\Re\{\\varepsilon_\mathrm{r}\}$", ticks=[-1e3, -1, 0, 1, 1e3])
-    cb.set_ticklabels(["-$10^3$", -1, 0, 1, "$10^3$"])
+    # cb = plt.colorbar(pcm, cax=axss[1, 2], label="$\Re\{\\varepsilon_\mathrm{r}\}$", ticks=[-1e3, -1, 0, 1, 1e3])
+    # cb.set_ticklabels(["-$10^3$", -1, 0, 1, "$10^3$"])
 
-    unused_axis = [[0,1], [0,2], [2,1], [2,2]]
-    for ax in unused_axis:
-      axss[ax[0], ax[1]].axis("off")
+    # unused_axis = [[0,1], [0,2], [2,1], [2,2]]
+    # for ax in unused_axis:
+    #   axss[ax[0], ax[1]].axis("off")
 
 
-    for i, ax in enumerate(axss[:, 0]):
-      letter = chr(ord("a")+i)
-      ax.annotate(
-            f" ({letter})",
-            xy=(0, 1), xycoords='axes fraction',
-            xytext=(+0.5, -0.5), textcoords='offset fontsize',
-            fontsize='medium', verticalalignment='top', fontfamily='serif',
-            bbox=dict(facecolor=(1,1,1,0.8), edgecolor='none', pad=2.0))
+    # for i, ax in enumerate(axss[:, 0]):
+    #   letter = chr(ord("a")+i)
+    #   ax.annotate(
+    #         f" ({letter})",
+    #         xy=(0, 1), xycoords='axes fraction',
+    #         xytext=(+0.5, -0.5), textcoords='offset fontsize',
+    #         fontsize='medium', verticalalignment='top', fontfamily='serif',
+    #         bbox=dict(facecolor=(1,1,1,0.8), edgecolor='none', pad=2.0))
 
-    plt.savefig("out/ThreePole.pdf", dpi=1200)
+    # plt.savefig("out/ThreePole.pdf", dpi=1200)
 
     # # %%
     # large_domain = [0.7-0.7j, 5.0+0.05j]
@@ -452,6 +458,23 @@ if __name__ == "__main__":
     # %%
     # %matplotlib widget
 
+    import numpy as np
+
+    n_frames = 200
+    s = np.linspace(0, 1, n_frames)
+
+    center = 0.485#0.5
+    width = 0.5
+
+    speed = 1 - 0.99 * np.exp(-(s-center)**2/(2*width**2))
+    t = np.cumsum(speed)
+    t = (t - t.min()) / (t.max() - t.min())
+    ds = 0.05 + t*0.35
+    plt.plot(ds)
+    plt.axhline(0.19)
+    plt.axhline(0.23)
+    plt.show()
+
     oscs = [1, 0.1, 0.05, 0.025]
     plot_domain2 = [1.6-0.149j, 1.82] #+0.05j]
     plot_domain1 = [1.3-0.149j, 2.2] #+0.05j]
@@ -463,173 +486,176 @@ if __name__ == "__main__":
     pole_to_color[11] = "C2"
     pole_to_color[5] = pole_to_color[10] = pole_to_color[16] = "C3"
 
-    fig, axss = plt.subplots(
-        2, len(oscs)+3, sharex="col",
-        figsize=(150*mm,90*mm), 
-        #constrained_layout=True, 
-        width_ratios=[1.4,1,1,0.06,0.12,1,0.06], #([1]*2 + [0.06])*2
-        height_ratios=[0.8, 1]
+
+    for frame, limit_thickness in enumerate(ds):
+
+      fig, axss = plt.subplots(
+          2, len(oscs)+3, sharex="col",
+          figsize=(150*mm,90*mm), 
+          #constrained_layout=True, 
+          width_ratios=[1.4,1,1,0.06,0.12,1,0.06], #([1]*2 + [0.06])*2
+          height_ratios=[0.8, 1]
+          )
+
+      suffix = 1
+
+      norms = []
+      #oscs = np.array(oscs)#[-2:]
+      for osc, axs in list(zip(oscs[::-1], axss.T[np.array([0,1,2,5])])):
+
+        vmin, vmax = thickness_color_ranges[osc >= thresh]
+        pcm, cmap, norm = plot_trajectories(
+            1, osc, 1, domain, 
+            plot_domain=plot_domain1 if osc==1 else plot_domain2, 
+            unit=unit, axs=axs, cbar=False, labels=False, d_limit=0.4, 
+            upsample=10, label_suffix = suffix,
+            thickness_color_norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax),
+            eps_background=False, linewidth_modes=[1], arrows=True, 
+            arrow_head_angle=np.pi/16 if osc==1 else np.pi/10,
+            projection_at_top=True, num_modes=1, limit_thickness=limit_thickness
         )
+        suffix += 1
+        axs[0].set_title(rf"$\eta = \num{{{osc:.3f}}}$")
+        norms.append(norm)
 
-    suffix = 1
+      # ## plot inset 1
+      # axins = axss[0,1].inset_axes(
+      #   [0.58, -0.09, 0.6, 0.48],
+      #   xlim=(1.73, 1.74),
+      #   ylim=(0.205, 0.23),
+      #   xticklabels=[], yticklabels=[]
+      # )
 
-    norms = []
-    #oscs = np.array(oscs)#[-2:]
-    for osc, axs in list(zip(oscs[::-1], axss.T[np.array([0,1,2,5])])):
+      # axss[0,1].set_zorder(5)
+      # axins.set_zorder(6)
 
-      vmin, vmax = thickness_color_ranges[osc >= thresh]
-      pcm, cmap, norm = plot_trajectories(
-          1, osc, 1, domain, 
-          plot_domain=plot_domain1 if osc==1 else plot_domain2, 
-          unit=unit, axs=axs, cbar=False, labels=False, d_limit=0.4, 
-          upsample=10, label_suffix = suffix,
-          thickness_color_norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax),
-          eps_background=False, linewidth_modes=[1], arrows=True, 
-          arrow_head_angle=np.pi/16 if osc==1 else np.pi/10,
-          projection_at_top=True, num_modes=1
-      )
-      suffix += 1
-      axs[0].set_title(rf"$\eta = \num{{{osc:.3f}}}$")
-      norms.append(norm)
-
-    # ## plot inset 1
-    # axins = axss[0,1].inset_axes(
-    #   [0.58, -0.09, 0.6, 0.48],
-    #   xlim=(1.73, 1.74),
-    #   ylim=(0.205, 0.23),
-    #   xticklabels=[], yticklabels=[]
-    # )
-
-    # axss[0,1].set_zorder(5)
-    # axins.set_zorder(6)
-
-    npoles = 1
-    scale_osc = 0.05
-    scale_damping = 1
-    poles, residues, thickness, material_poles = load_data(
-      npoles, scale_osc, scale_damping, domain
-    )
-    poles_tracked, residues_tracked = track_qnms(poles, residues)
-    selection, _ = select_modes(npoles, scale_osc, scale_damping, domain, modenumber=1)
-    poles_tracked = poles_tracked.T[selection]
-    # axins.plot(poles_tracked.real.T, thickness, color="#96a8b4")
-    # axins.tick_params(axis='y', which='minor', left=False, right=False)
+      # npoles = 1
+      # scale_osc = 0.05
+      # scale_damping = 1
+      # poles, residues, thickness, material_poles = load_data(
+      #   npoles, scale_osc, scale_damping, domain
+      # )
+      # poles_tracked, residues_tracked = track_qnms(poles, residues)
+      # selection, _ = select_modes(npoles, scale_osc, scale_damping, domain, modenumber=1)
+      # poles_tracked = poles_tracked.T[selection]
+      # axins.plot(poles_tracked.real.T, thickness, color="#96a8b4")
+      # axins.tick_params(axis='y', which='minor', left=False, right=False)
+      
+      # # Draw the indicator or zoom lines.
+      # axss[0,1].indicate_inset_zoom(axins, edgecolor="black")
     
-    # # Draw the indicator or zoom lines.
-    # axss[0,1].indicate_inset_zoom(axins, edgecolor="black")
-  
-    # ## plot inset 2
-    # axins = axss[1,0].inset_axes(
-    #   [0.65, 0.45, 0.5, 0.33],
-    #   xlim=(1.705, 1.713),
-    #   ylim=(-0.0115, -0.0108),
-    #   xticklabels=[], yticklabels=[]
-    # )
-    # axss[1,0].set_zorder(5)
-    # axins.set_zorder(6)
+      # ## plot inset 2
+      # axins = axss[1,0].inset_axes(
+      #   [0.65, 0.45, 0.5, 0.33],
+      #   xlim=(1.705, 1.713),
+      #   ylim=(-0.0115, -0.0108),
+      #   xticklabels=[], yticklabels=[]
+      # )
+      # axss[1,0].set_zorder(5)
+      # axins.set_zorder(6)
 
-    npoles = 1
-    scale_osc = 0.025
-    scale_damping = 1
-    poles, residues, thickness, material_poles = load_data(
-      npoles, scale_osc, scale_damping, domain
-    )
-    poles_tracked, residues_tracked = track_qnms(poles, residues)
-    mask = thickness < 10 #0.4
-    poles_tracked = poles_tracked[mask]
-    residues_tracked = residues_tracked[mask]
-    thickness = thickness[mask]
+      # npoles = 1
+      # scale_osc = 0.025
+      # scale_damping = 1
+      # poles, residues, thickness, material_poles = load_data(
+      #   npoles, scale_osc, scale_damping, domain
+      # )
+      # poles_tracked, residues_tracked = track_qnms(poles, residues)
+      # mask = thickness < 10 #0.4
+      # poles_tracked = poles_tracked[mask]
+      # residues_tracked = residues_tracked[mask]
+      # thickness = thickness[mask]
 
-    interp_d = np.linspace(min(thickness), max(thickness), (len(thickness)-1)*10+1) [::-1]
-    cmap = mpl.cm.viridis_r
-    thickness_color_norm = norms[0]
-    colors_interp = cmap(thickness_color_norm(interp_d))
+      # interp_d = np.linspace(min(thickness), max(thickness), (len(thickness)-1)*10+1) [::-1]
+      # cmap = mpl.cm.viridis_r
+      # thickness_color_norm = norms[0]
+      # colors_interp = cmap(thickness_color_norm(interp_d))
 
-    for i, (pole, res) in enumerate(zip(poles_tracked.T, residues_tracked.T)):
-      real = np.interp(interp_d, thickness, pole.real)
-      imag = np.interp(interp_d, thickness, pole.imag)
+      # for i, (pole, res) in enumerate(zip(poles_tracked.T, residues_tracked.T)):
+      #   real = np.interp(interp_d, thickness, pole.real)
+      #   imag = np.interp(interp_d, thickness, pole.imag)
 
-      color = pole_to_color[i]
-      # axins.scatter(real, imag, edgecolor='none', s=1, c=color, rasterized=True)
-      color = "gray" if color == "none" else color
-      # add_arrow_head(real, imag, 0.0001, np.pi/16, [color]*len(colors_interp), ax = axins)
+      #   color = pole_to_color[i]
+        # axins.scatter(real, imag, edgecolor='none', s=1, c=color, rasterized=True)
+        # color = "gray" if color == "none" else color
+        # add_arrow_head(real, imag, 0.0001, np.pi/16, [color]*len(colors_interp), ax = axins)
 
-      # poi_labels = {3: "FP", 0: "M"}
-      # thickness_pts = [0.2, 0.209, 0.22]
-      # if i in poi_labels:
-      #   real_labels = np.interp(thickness_pts, thickness, pole.real)
-      #   imag_labels = np.interp(thickness_pts, thickness, pole.imag)
-      #   axss[1,0].scatter(real_labels, imag_labels, marker="v", zorder=12, color="k")
-      #   for j, (re, im) in enumerate(zip(real_labels, imag_labels)):
-      #     if poi_labels[i] == "M":
-      #       re += 0.01 * (j-1)
-      #       im -= 0.02
-      #       va = 'top'
-      #     else:
-      #       va = 'bottom'
-      #     axss[1,0].annotate(f"{poi_labels[i]}{j+1}", (re, im+0.01), fontsize=6, va=va , ha='center')
+        # poi_labels = {3: "FP", 0: "M"}
+        # thickness_pts = [0.2, 0.209, 0.22]
+        # if i in poi_labels:
+        #   real_labels = np.interp(thickness_pts, thickness, pole.real)
+        #   imag_labels = np.interp(thickness_pts, thickness, pole.imag)
+        #   axss[1,0].scatter(real_labels, imag_labels, marker="v", zorder=12, color="k")
+        #   for j, (re, im) in enumerate(zip(real_labels, imag_labels)):
+        #     if poi_labels[i] == "M":
+        #       re += 0.01 * (j-1)
+        #       im -= 0.02
+        #       va = 'top'
+        #     else:
+        #       va = 'bottom'
+        #     axss[1,0].annotate(f"{poi_labels[i]}{j+1}", (re, im+0.01), fontsize=6, va=va , ha='center')
 
-    e_r = np.linspace(1.7, 1.72, 51)
-    e_i = np.linspace(-0.013, -0.009, 31)
-    E_r, E_i = np.meshgrid(e_r, e_i)
-    E = E_r +1j*E_i
-    
-    eps = eps_surmof(E, npoles, scale_osc, scale_damping)
-    ds = 1
-    _, _, _, poles = diffaaable.aaa(E[::ds, ::ds], eps[::ds, ::ds], tol=1e-8)
-    _, _, _, zeros = diffaaable.aaa(E[::ds, ::ds], 1/eps[::ds, ::ds], tol=1e-8)
+      # e_r = np.linspace(1.7, 1.72, 51)
+      # e_i = np.linspace(-0.013, -0.009, 31)
+      # E_r, E_i = np.meshgrid(e_r, e_i)
+      # E = E_r +1j*E_i
+      
+      # eps = eps_surmof(E, npoles, scale_osc, scale_damping)
+      # ds = 1
+      # _, _, _, poles = diffaaable.aaa(E[::ds, ::ds], eps[::ds, ::ds], tol=1e-8)
+      # _, _, _, zeros = diffaaable.aaa(E[::ds, ::ds], 1/eps[::ds, ::ds], tol=1e-8)
 
-    mew = 0.5
-    # axins.scatter(
-    #   poles.real, poles.imag, 
-    #   marker="x", color="k", linewidths=mew
-    # )
-    # axins.scatter(
-    #   zeros.real, zeros.imag, 
-    #   facecolors='none', edgecolors="k", linewidths=mew
-    # )
+      # mew = 0.5
+      # axins.scatter(
+      #   poles.real, poles.imag, 
+      #   marker="x", color="k", linewidths=mew
+      # )
+      # axins.scatter(
+      #   zeros.real, zeros.imag, 
+      #   facecolors='none', edgecolors="k", linewidths=mew
+      # )
 
-    # # Draw the indicator or zoom lines.
-    # axss[1,0].indicate_inset_zoom(axins, edgecolor="black")
+      # # Draw the indicator or zoom lines.
+      # axss[1,0].indicate_inset_zoom(axins, edgecolor="black")
 
-    ## colorbars etc.
-    if len(norms) < 4:
-      norms = [norms[0]]*4
-    axss[0,0].set_ylim(0.01, 0.4)
+      ## colorbars etc.
+      if len(norms) < 4:
+        norms = [norms[0]]*4
+      axss[0,0].set_ylim(0.01, 0.4)
 
-    shrink=0.8
-    mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norms[1])
-    cb = fig.colorbar(mappable, cax=axss[1, 3], shrink=shrink)
-    #cb.set_label(f"$d$ [{um}]", labelpad=-10)
-    cb.ax.set_title(f"$d$ [{um}]", loc='left')
-    cb.ax.zorder = -1
+      shrink=0.8
+      mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norms[1])
+      cb = fig.colorbar(mappable, cax=axss[1, 3], shrink=shrink)
+      #cb.set_label(f"$d$ [{um}]", labelpad=-10)
+      cb.ax.set_title(f"$d$ [{um}]", loc='left')
+      cb.ax.zorder = -1
 
-    mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norms[3])
-    cb = fig.colorbar(mappable, cax=axss[1, -1], shrink=shrink)
-    cb.ax.set_title(f"$d$ [{um}]", loc='left')
-    cb.ax.zorder = -1
+      mappable = mpl.cm.ScalarMappable(cmap=cmap, norm=norms[3])
+      cb = fig.colorbar(mappable, cax=axss[1, -1], shrink=shrink)
+      cb.ax.set_title(f"$d$ [{um}]", loc='left')
+      cb.ax.zorder = -1
 
-    #axss[0,0].set_title(f"$\eta$ = {oscs[-1]}")
-    fig.supxlabel(f"$\Re\{{{qty_str[unit]}\}}$ [{unit}]")
-    axss[1,0].set_ylabel(f"$\Im\{{{qty_str[unit]}\}}$ [{unit}]")
-    axss[0,0].set_ylabel(f"$d$ [{um}]")
+      #axss[0,0].set_title(f"$\eta$ = {oscs[-1]}")
+      fig.supxlabel(f"$\Re\{{{qty_str[unit]}\}}$ [{unit}]")
+      axss[1,0].set_ylabel(f"$\Im\{{{qty_str[unit]}\}}$ [{unit}]")
+      axss[0,0].set_ylabel(f"$d$ [{um}]")
 
-    fig.align_ylabels()
+      fig.align_ylabels()
 
-    for axs in axss.T[np.array([1,2,5])]:
-      axs[0].sharey(axss[0,0])
-      axs[0].tick_params(axis='y',labelleft=False)
-      axs[1].sharey(axss[1,0])
-      axs[1].tick_params(axis='y',labelleft=False)
+      for axs in axss.T[np.array([1,2,5])]:
+        axs[0].sharey(axss[0,0])
+        axs[0].tick_params(axis='y',labelleft=False)
+        axs[1].sharey(axss[1,0])
+        axs[1].tick_params(axis='y',labelleft=False)
 
-    axss[0, 3].axis("off")
-    axss[0, 6].axis("off")
+      axss[0, 3].axis("off")
+      axss[0, 6].axis("off")
 
-    axss[0, 4].axis("off")
-    axss[1, 4].axis("off")
+      axss[0, 4].axis("off")
+      axss[1, 4].axis("off")
 
-    plt.tight_layout()
-    plt.subplots_adjust(hspace=0.05, wspace=0.1)
+      plt.tight_layout()
+      plt.subplots_adjust(hspace=0.05, wspace=0.1)
 
-    print("Start Rendering")
-    plt.savefig("out/OscReduction.pdf", dpi=1200)
+      print("Start Rendering")
+      plt.savefig(f"out/OscReduction_f{frame}.png", dpi=1200)

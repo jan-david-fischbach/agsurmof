@@ -183,8 +183,9 @@ def planar_analogous(osc_strength, axs, plot_domain = [1.25-0.6j, 2.25+0.05j], c
     for pol in [1]:
       for l in [1,2]:
         for mode in range(1, 10):
-          plot_single_gradient_trajectory(pol, l, mode, suffix=suffix, 
-            interp_d=interp_d, colors=colors_interp)
+          if mode <= len(colors) and colors[mode-1] != 'gray':
+            plot_single_gradient_trajectory(pol, l, mode, suffix=suffix, 
+              interp_d=interp_d, colors=colors_interp)
 
   ## Material Poles and Zeros
   plt.scatter(
@@ -205,21 +206,23 @@ def planar_analogous(osc_strength, axs, plot_domain = [1.25-0.6j, 2.25+0.05j], c
           color = colors[mode-1]
         else:
           color = 'gray'
-        plot_real_trajectory(pol, l, mode, suffix=suffix, color=color)
+        
+        if color != 'gray':
+          plot_real_trajectory(pol, l, mode, suffix=suffix, color=color)
 
-  axs_idx = 0
-  for i, ax in enumerate(axs):
-    if i==2:
-      continue
-    letter = chr(ord("a")+axs_idx)
-    ax.annotate(
-          f" ({letter}{label_suffix})",
-          xy=(0, 1), xycoords='axes fraction',
-          xytext=(+0.5, -0.5), textcoords='offset fontsize',
-          fontsize='medium', verticalalignment='top', fontfamily='serif',
-          # bbox=dict(facecolor=(1,1,1,0.8), edgecolor='none', pad=2.0)
-      )
-    axs_idx += 1
+  # axs_idx = 0
+  # for i, ax in enumerate(axs):
+  #   if i==2:
+  #     continue
+  #   letter = chr(ord("a")+axs_idx)
+  #   ax.annotate(
+  #         f" ({letter}{label_suffix})",
+  #         xy=(0, 1), xycoords='axes fraction',
+  #         xytext=(+0.5, -0.5), textcoords='offset fontsize',
+  #         fontsize='medium', verticalalignment='top', fontfamily='serif',
+  #         # bbox=dict(facecolor=(1,1,1,0.8), edgecolor='none', pad=2.0)
+  #     )
+  #   axs_idx += 1
 
   axs[1].spines[['bottom']].set_visible(False)
   axs[1].get_xaxis().tick_top()
@@ -232,14 +235,24 @@ def planar_analogous(osc_strength, axs, plot_domain = [1.25-0.6j, 2.25+0.05j], c
 
 # %%
 default=['C0', 'C1', 'C2', 'C3', 'C4', 'C5']
+# mode_to_color = { # 'C2' is the passing (weakly coupled) mode
+#   1:    ['C1', 'C3', 'C0', 'C0', 'C2'],
+#   0.5:  default,
+#   0.25: default,
+#   0.1:  default,
+#   0.05: ['C0', 'C0', 'C1', 'C2', 'C3'],
+#   0.025:['C2', 'C0', 'C0', 'C1'],
+#   0.01: ['C0', 'C0', 'C2', 'C1']
+# }
+
 mode_to_color = { # 'C2' is the passing (weakly coupled) mode
-  1:    ['C1', 'C3', 'C0', 'C0', 'C2'],
+  1:    ['gray', 'gray', 'C0', 'C0', 'C2'],
   0.5:  default,
   0.25: default,
   0.1:  default,
-  0.05: ['C0', 'C0', 'C1', 'C2', 'C3'],
-  0.025:['C2', 'C0', 'C0', 'C1'],
-  0.01: ['C0', 'C0', 'C2', 'C1']
+  0.05: ['C0', 'C0', 'gray', 'C2', 'gray'],
+  0.025:['C2', 'C0', 'C0', 'gray'],
+  0.01: ['C0', 'C0', 'C2', 'gray']
 }
 
 # %%
@@ -250,7 +263,7 @@ to_eV(calc_material_poles(1, 1))
 
 # %%
 #figsize = (180*mm,70*mm)
-figsize = (140*mm,50*mm)
+figsize = (150*mm,90*mm)
 fig, axs = plt.subplots(3, 5, sharey="row", figsize=figsize, sharex='col', height_ratios=[1, 1.5, 0.5], width_ratios=[1]*4+[0.4]) #constrained_layout=True,
 
 
@@ -279,7 +292,7 @@ axs[1, 0].yaxis.label.set_position((-0.2, 0.25))
 
 axs[0, 0].set_ylabel(rf'$r_\mathrm{{core}}$ ({um})')
 
-fig.supxlabel(r'$\Re\{\hbar \tilde \omega\}$ (eV)', y=0.09)
+fig.supxlabel(r'$\Re\{\hbar \tilde \omega\}$ (eV)', y=0.03)
 fig.align_ylabels()
 
 axs[0, 0].set_ylim(0.05, 0.35)
@@ -292,7 +305,7 @@ axs[2, 0].yaxis.set_major_locator(ticker.MultipleLocator(base=0.05))  # y-axis t
 axs[2, 0].yaxis.set_minor_locator(ticker.MultipleLocator(base=0.01))
 
 plt.tight_layout()
-fig.subplots_adjust(hspace=0.08, wspace=0.05)
+fig.subplots_adjust(hspace=0.08, wspace=0.08)
 
 pos = cbar.ax.get_position()  # get current position
 new_pos = [pos.x0, pos.y0 - 0.05, pos.width, pos.height]  # y0 shifted up
