@@ -41,7 +41,7 @@ import staaax
 def ag_surmof_cavity_smat(
   hbar_omega, thickness, npoles:int = 3, 
   scale_osc:float=1, scale_damping:float=1, 
-  mirror1d = 0.01, mirror2d = 0.03
+  mirror1d = 0.01, mirror2d = 0.03, kpar_eV=0
   ):
     
   n_surmof = np.sqrt(eps_surmof(
@@ -57,20 +57,20 @@ def ag_surmof_cavity_smat(
   ns = [1, n_ag, n_surmof, n_ag, 1]
   k0 = to_omega(hbar_omega)/c0 * 1e-6 # in 1/um
   # print(f"{k0=}")
-  kx = 0
+  kx = to_omega(kpar_eV)/c0 * 1e-6
   stack, info = staaax.angled_stratified.stack_smat_kx(ds, ns, k0, kx, pol="p")
   return stack()
 
 def ag_surmof_cavity_det_smat(
   hbar_omega, thickness, npoles:int = 3, 
   scale_osc:float=1, scale_damping:float=1, 
-  mirror1d = 0.01, mirror2d = 0.03
+  mirror1d = 0.01, mirror2d = 0.03, kpar_eV:float=0
   ):
     
   smat = ag_surmof_cavity_smat(
     hbar_omega, thickness, npoles, 
     scale_osc, scale_damping, 
-    mirror1d, mirror2d
+    mirror1d, mirror2d, kpar_eV=kpar_eV
   )
   smat, portmap = sax.sdense(smat)
   return np.linalg.det(smat)

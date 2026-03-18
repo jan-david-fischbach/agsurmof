@@ -491,9 +491,10 @@ if __name__ == "__main__":
 
       fig, axss = plt.subplots(
           2, len(oscs)+3, sharex="col",
-          figsize=(150*mm,90*mm), 
+          figsize=(150*mm,60*mm), 
           #constrained_layout=True, 
-          width_ratios=[1.4,1,1,0.06,0.12,1,0.06], #([1]*2 + [0.06])*2
+          width_ratios=[1,1,1,0.06,0.12,1,0.06],
+          #width_ratios=[1.4,1,1,0.06,0.12,1,0.06], #([1]*2 + [0.06])*2
           height_ratios=[0.8, 1]
           )
 

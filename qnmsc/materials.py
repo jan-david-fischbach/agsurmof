@@ -18,7 +18,8 @@ def surmof_material_data(scale_damping, scale_osc):
     gamma = _f_to_omega(
         np.array([5.3, 6.0, 6.2]) * scale_damping
     ) # in s^-1
-    
+
+
     intensity = np.array([14.84804589, 1.63227866, 1.04500718]) * scale_osc
     eps_background = 1.6
     return omega_0, gamma, intensity, eps_background
@@ -48,6 +49,7 @@ def eps_surmof(hbar_omega, npoles, scale_osc=1, scale_damping=1):
 
     omega = to_omega(hbar_omega)
     eps = eps_background*np.ones_like(hbar_omega, dtype='complex')
+
     for i in range(npoles):
         eps += omega_p[i]**2 / (omega_0[i]**2 - omega**2 - 1j*omega*gamma[i])
 
@@ -71,6 +73,9 @@ def eps_ag_markus(hbar_omega):
 
     omega = to_omega(hbar_omega)
     return 1 + Agwp**2 / (Agw0**2 - omega**2 - 1j*Aggamma*omega)
+
+def eps_ag_nondispersive(hbar_omega, hbar_omega_0 = 1.7):
+    return eps_ag_markus(hbar_omega_0)
 
 def eps_ag_sergei(hbar_omega):
     """Relative Permittivity of the silver material
@@ -100,7 +105,7 @@ def eps_ag_sergei(hbar_omega):
 
     return epsilon_hat - omega_plas**2/(omega**2+1j*gamma*omega)
 
-eps_ag = eps_ag_markus
+eps_ag = eps_ag_nondispersive#eps_ag_markus
 
 if __name__ == "__main__":
     # Testing the eps_surmof function
